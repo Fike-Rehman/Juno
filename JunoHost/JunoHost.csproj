@@ -23,6 +23,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CTS.Common.Utilities\CTS.Common.Utilities.csproj" />
+    <ProjectReference Include="..\CTS.Oberon\CTS.Oberon.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="OberonDevices.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

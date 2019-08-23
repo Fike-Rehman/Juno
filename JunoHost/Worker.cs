@@ -4,6 +4,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CTS.Common.Utilities;
+using CTS.Oberon;
 
 namespace JunoHost
 {
@@ -11,20 +12,25 @@ namespace JunoHost
     {
         private readonly ILogger<Worker> _logger;
 
-        private Robin robin;
+        private readonly Robin _robin;
+
+        private readonly OberonEngine _oberonEngine;
 
         public Worker(ILogger<Worker> logger)
         {
             _logger = logger;
 
-            robin = new Robin();
+            _robin = new Robin();
+
+            _oberonEngine = new OberonEngine();
         }
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                await Task.Delay(1000, stoppingToken);
+                await Task.Delay(1000 * 60, stoppingToken);
             }
         }
 
@@ -33,15 +39,17 @@ namespace JunoHost
            
             _logger.LogInformation("Starting Juno Service. Please stand by...");
 
-            robin.SpeakAsync("Starting Juno Service... Please stand by").Wait();
+            _robin.SpeakAsync("Starting Juno Service... Please stand by").Wait();
 
-            return base.StartAsync(cancellationToken);
+            var task = Task.Factory.StartNew(() => _oberonEngine.Run(cancellationToken));
+
+            return task;
         }
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Juno Service Stop requested!");
-            robin.SpeakAsync("Stoping Juno Service. Please stand by...").Wait();
+            _robin.SpeakAsync("Stoping Juno Service. Please stand by...").Wait();
 
             int n = 3;
             while (n > 0)
