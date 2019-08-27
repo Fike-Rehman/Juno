@@ -48,10 +48,10 @@ namespace CTS.Oberon
 
             _oberonDevices.ForEach(d =>
             {
-                var pt = Task.Run(() => d.StartPingRoutine(), cToken);
-                pingTasks.Add(pt);
-
                 if (cToken.IsCancellationRequested) return;
+
+                var pt = Task.Run(() => d.StartPingRoutine(cToken));
+                pingTasks.Add(pt); 
             });
         }
 
@@ -75,6 +75,7 @@ namespace CTS.Oberon
                 _logger.Error($"Error while reading Oberon Devices file: {x.Message}");
             }
         }
+
 
         private async Task InitDevicesAsync(CancellationToken ct)
         {

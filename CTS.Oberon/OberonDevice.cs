@@ -1,52 +1,55 @@
-﻿using Newtonsoft.Json;
+﻿
 using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using log4net;
 
 namespace CTS.Oberon
 {
-    public enum PingResult
-    {
-        OK,
-        FAILURE,
-        CANCELLED
-    };
-
-    public class OberonDevice : IDeviceOps
+    public partial class OberonDevice : IDeviceOps
     {
 
         private static readonly log4net.ILog _logger =
                  log4net.LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-        private Timer _pingTimer;
+       // private Timer _pingTimer;
 
-        [JsonProperty(PropertyName = "Id")]
-        public int Id { get; set; }
+       // private Timer _deviceMonitorTimer;
 
-        [JsonProperty(PropertyName = "Name")]
-        public string Name { get; set; }
-
-        [JsonProperty(PropertyName = "IpAddress")]
-        public string IpAddress { get; set; }
-
-        [JsonProperty(PropertyName = "Location")]
-        public string Location { get; set; }
-
-        [JsonProperty(PropertyName = "OnTimeOffset")]
-        public TimeSpan OnTimeOffset { get; set; }
-
-        [JsonProperty(PropertyName = "OffTime")]
-        public TimeSpan OffTime { get; set; }
-
-
-        public void StartPingRoutine()
+        
+        public async Task StartPingRoutine(CancellationToken ct)
         {
-            var pingInterval = new TimeSpan(0, 0, 1, 0); // 1 minute
-            _pingTimer = new Timer(OnPingTimer, null, pingInterval, Timeout.InfiniteTimeSpan);
+            while(!ct.IsCancellationRequested)
+            {
+                await Task.Delay(new TimeSpan(0, 0, 1, 0));
+
+                if(!ct.IsCancellationRequested)
+                {
+                    var response = await PingAsync(IpAddress);
+
+                    if (response == "Success")
+                    {
+                        _logger.Debug($"Ping Acknowleged! Device Ip: {IpAddress}");
+                       
+                    }
+                    else
+                    {
+                        // Device has failed to respond to the Ping request
+                        _logger.Warn($"Device with Ip Address {IpAddress} is not responding to the Pings!");
+                        _logger.Warn($"Please make sure this device is still on line");
+                    }
+
+                }
+            }
+        }
+
+        public void StartMonitorRoutine()
+        {
+            var monitorInterval = new TimeSpan(0, 0, 30); // every 30 secs
+
+           // _deviceMonitorTimer = new Timer(OnMonitorTimer, null, monitorInterval, Timeout.InfiniteTimeSpan);
         }
 
 
@@ -123,24 +126,30 @@ namespace CTS.Oberon
         }
 
 
-        private async void OnPingTimer(object device)
-        {
-            // send a ping asynchronously and reset the timer
+        //private async void OnPingTimer(object device)
+        //{
+        //    // send a ping asynchronously and reset the timer
 
-            var response = await PingAsync(IpAddress);
+        //    var response = await PingAsync(IpAddress);
 
-            if (response == "Success")
-            {
-                _logger.Debug($"Ping Acknowleged! Device Ip: {IpAddress}");
-                var pingInterval = new TimeSpan(0, 0, 1, 0); // 1 minute
-                _pingTimer.Change(pingInterval, Timeout.InfiniteTimeSpan);
-            }
-            else
-            {
-                // Device has failed to respond to the Ping request
-                _logger.Warn($"Device with Ip Address {IpAddress} is not responding to the Pings!");
-                _logger.Warn($"Please make sure this device is still on line");
-            }
-        }
+        //    if (response == "Success")
+        //    {
+        //        _logger.Debug($"Ping Acknowleged! Device Ip: {IpAddress}");
+        //        var pingInterval = new TimeSpan(0, 0, 1, 0); // 1 minute
+        //        _pingTimer.Change(pingInterval, Timeout.InfiniteTimeSpan);
+        //    }
+        //    else
+        //    {
+        //        // Device has failed to respond to the Ping request
+        //        _logger.Warn($"Device with Ip Address {IpAddress} is not responding to the Pings!");
+        //        _logger.Warn($"Please make sure this device is still on line");
+        //    }
+        //}
+
+        //private async void OnMonitorTimer(object device)
+        //{
+        //    // TODO: Implement device monitoring here.
+        //    await Task.Delay(3000);
+        //}
     }
 }

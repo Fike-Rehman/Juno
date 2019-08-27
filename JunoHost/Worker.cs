@@ -41,7 +41,7 @@ namespace JunoHost
 
             _robin.SpeakAsync("Starting Juno Service... Please stand by").Wait();
 
-            var task = Task.Factory.StartNew(() => _oberonEngine.Run(cancellationToken));
+            var task = Task.Run(() => _oberonEngine.Run(cancellationToken));
 
             return task;
         }

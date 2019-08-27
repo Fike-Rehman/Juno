@@ -7,7 +7,7 @@ namespace CTS.Oberon
     {
         Task<PingResult> DevicePingAsync(string deviceIp, CancellationToken ct);
 
-        void StartPingRoutine();
+        Task StartPingRoutine(CancellationToken cToken);
     }
 }
 
