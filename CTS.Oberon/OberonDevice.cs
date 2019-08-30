@@ -5,14 +5,17 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace CTS.Oberon
 {
     public partial class OberonDevice : IDeviceOps
     {
 
-        private static readonly log4net.ILog _logger =
-                 log4net.LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        //private static readonly log4net.ILog _logger =
+        //         log4net.LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
+        private readonly Logger<OberonDevice> _logger;
 
        // private Timer _pingTimer;
 
@@ -31,14 +34,14 @@ namespace CTS.Oberon
 
                     if (response == "Success")
                     {
-                        _logger.Debug($"Ping Acknowleged! Device Ip: {IpAddress}");
+                        _logger.LogDebug($"Ping Acknowleged! Device Ip: {IpAddress}");
                        
                     }
                     else
                     {
                         // Device has failed to respond to the Ping request
-                        _logger.Warn($"Device with Ip Address {IpAddress} is not responding to the Pings!");
-                        _logger.Warn($"Please make sure this device is still on line");
+                        _logger.LogWarning($"Device with Ip Address {IpAddress} is not responding to the Pings!");
+                        _logger.LogWarning($"Please make sure this device is still on line");
                     }
 
                 }
@@ -65,13 +68,13 @@ namespace CTS.Oberon
 
                 n++;
 
-                _logger.Debug($"Sending ping request to device:{IpAddress}; Attempt # {n}");
+                _logger.LogDebug($"Sending ping request to device:{IpAddress}; Attempt # {n}");
 
                 var pingresponse = await PingAsync(deviceIp);
 
                 if (pingresponse == "Success")
                 {
-                    _logger.Debug($"Ping Acknowledged!. Device Ip: {IpAddress}");
+                    _logger.LogDebug($"Ping Acknowledged!. Device Ip: {IpAddress}");
                     result = PingResult.OK;
                     break;
                 }
@@ -81,8 +84,8 @@ namespace CTS.Oberon
                 {
                     // already attempted 3 times and it failed every time.
                     result = PingResult.FAILURE;
-                    _logger.Error($"Device with Ip Address: {deviceIp} has failed to respond to repeated Ping requests");
-                    _logger.Error("Please check this device and make sure that it is still On line");
+                    _logger.LogError($"Device with Ip Address: {deviceIp} has failed to respond to repeated Ping requests");
+                    _logger.LogError("Please check this device and make sure that it is still On line");
                 }
                 else
                 {

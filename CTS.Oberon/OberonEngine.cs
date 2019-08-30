@@ -6,13 +6,17 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+
 
 namespace CTS.Oberon
 {
     public class OberonEngine
     {
-        private static readonly log4net.ILog _logger =
-                 log4net.LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+        //private static readonly log4net.ILog _logger =
+        //         log4net.LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
+
+        private readonly ILogger<OberonEngine> _logger;
 
         private List<OberonDevice> _oberonDevices;
 
@@ -41,8 +45,8 @@ namespace CTS.Oberon
 
             // Start the Task to run the Ping routines for each device:
 
-            _logger.Debug("Device initialization Completed!");
-            _logger.Debug($"{_oberonDevices.Count} active Oberon devices(s) detected during initialization!");
+            _logger.LogDebug("Device initialization Completed!");
+            _logger.LogDebug($"{_oberonDevices.Count} active Oberon devices(s) detected during initialization!");
 
             var pingTasks = new List<Task>();
 
@@ -66,13 +70,13 @@ namespace CTS.Oberon
                     string jsonString = file.ReadToEnd();
                     _oberonDevices = JsonConvert.DeserializeObject<List<OberonDevice>>(jsonString);
 
-                    _logger.Info($"Found {_oberonDevices.Count} Oberon devices defined in the system!");
+                    _logger.LogInformation($"Found {_oberonDevices.Count} Oberon devices defined in the system!");
                 }
             }
             catch (Exception x)
             {
 
-                _logger.Error($"Error while reading Oberon Devices file: {x.Message}");
+                _logger.LogError($"Error while reading Oberon Devices file: {x.Message}");
             }
         }
 
@@ -87,23 +91,23 @@ namespace CTS.Oberon
 
                     var device = _oberonDevices[i];
 
-                    _logger.Debug($"Pinging device {device.IpAddress}....");
+                    _logger.LogDebug($"Pinging device {device.IpAddress}....");
 
                     var result = await device.DevicePingAsync(device.IpAddress, ct);
 
                     if (result == PingResult.FAILURE)
                     {
-                        _logger.Warn($"Removing device with IP Address:{device.IpAddress} from device list because it doesn't appear to be on line");
+                        _logger.LogWarning($"Removing device with IP Address:{device.IpAddress} from device list because it doesn't appear to be on line");
 
                         _oberonDevices.Remove(device);
                     }
                     else if (result == PingResult.CANCELLED)
                     {
-                        _logger.Debug("Device initialization canceled upon user request!");
+                        _logger.LogWarning("Device initialization canceled upon user request!");
                     }
                     else
                     {
-                        _logger.Debug($"Device Ping Successful! Ip Address:{device.IpAddress}");
+                        _logger.LogWarning($"Device Ping Successful! Ip Address:{device.IpAddress}");
                     }
                 }
             }
