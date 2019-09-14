@@ -1,21 +1,17 @@
 ﻿using CTS.Common.Utilities;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 
 namespace CTS.Oberon
 {
-    public class OberonEngine
+    public class OberonEngine : IDeviceEngine
     {
-        //private static readonly log4net.ILog _logger =
-        //         log4net.LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-
         private readonly ILogger<OberonEngine> _logger;
 
         private List<OberonDevice> _oberonDevices;
@@ -23,17 +19,18 @@ namespace CTS.Oberon
         private DateTime _sunriseToday;
         private DateTime _sunsetToday;
 
-
-
-        public OberonEngine()
+        public OberonEngine(ILogger<OberonEngine> logger)
         {
             _oberonDevices = new List<OberonDevice>();
+            _logger = logger;
         }
 
         public void Run(CancellationToken cToken)
         {
             // Begin Oberon Activities
 
+            _logger.LogInformation("Beginning Oberon Activties...");
+            
             // Get the sunrise/sunset times 
             SolarTimes.GetSolarTimes(out _sunriseToday, out _sunsetToday);
 
@@ -44,9 +41,8 @@ namespace CTS.Oberon
             InitDevicesAsync(cToken).Wait();
 
             // Start the Task to run the Ping routines for each device:
-
-            _logger.LogDebug("Device initialization Completed!");
-            _logger.LogDebug($"{_oberonDevices.Count} active Oberon devices(s) detected during initialization!");
+            _logger.LogInformation("Device initialization Completed!");
+            _logger.LogInformation($"{_oberonDevices.Count} active Oberon devices(s) detected during initialization!");
 
             var pingTasks = new List<Task>();
 
@@ -54,9 +50,21 @@ namespace CTS.Oberon
             {
                 if (cToken.IsCancellationRequested) return;
 
-                var pt = Task.Run(() => d.StartPingRoutine(cToken));
+                // Create the progress object and start the ping routine:
+                var progress = new Progress<string>(LogProgress);
+
+                var pt = Task.Run(() => d.StartPingRoutine(progress, cToken));
                 pingTasks.Add(pt); 
             });
+        }
+
+        /// <summary>
+        /// logs the messages reported by the devices
+        /// </summary>
+        /// <param name="progressString"></param>
+        private void LogProgress(string progressString)
+        {
+            _logger.LogInformation(progressString);
         }
 
 
@@ -93,7 +101,9 @@ namespace CTS.Oberon
 
                     _logger.LogDebug($"Pinging device {device.IpAddress}....");
 
-                    var result = await device.DevicePingAsync(device.IpAddress, ct);
+                    var progress = new Progress<string>(msg => _logger.LogDebug(msg));
+
+                    var result = await device.DevicePingAsync(device.IpAddress, progress, ct);
 
                     if (result == PingResult.FAILURE)
                     {

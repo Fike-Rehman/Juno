@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using CTS.Oberon;
 
 namespace JunoHost
 {
@@ -16,7 +17,7 @@ namespace JunoHost
             }
             catch(Exception x)
             {
-                Console.WriteLine($"Juno Service was stopped by the user");
+                Console.WriteLine($"Juno Service was stopped by the user; {x.Message}");
             }
             
         }
@@ -26,11 +27,12 @@ namespace JunoHost
                             .UseWindowsService()
                             .ConfigureLogging((context, logger) =>
                             {
-                                logger.AddLog4Net();
+                                logger.AddLog4Net().SetMinimumLevel(LogLevel.Debug);
                             })
                             .ConfigureServices((hostContext, services) =>
                             {
-                                services.AddHostedService<Worker>();
+                                services.AddHostedService<Worker>()
+                                        .AddSingleton(typeof(IDeviceEngine), typeof(OberonEngine));
                             });
     }
 }

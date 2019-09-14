@@ -1,10 +1,10 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using CTS.Common.Utilities;
+using CTS.Oberon;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using CTS.Common.Utilities;
-using CTS.Oberon;
 
 namespace JunoHost
 {
@@ -14,24 +14,21 @@ namespace JunoHost
 
         private readonly Robin _robin;
 
-        private readonly OberonEngine _oberonEngine;
+        private readonly IDeviceEngine _oberonEngine;
 
-        public Worker(ILogger<Worker> logger)
+        public Worker(ILogger<Worker> logger, IDeviceEngine engine)
         {
             _logger = logger;
 
             _robin = new Robin();
 
-            _oberonEngine = new OberonEngine();
+            _oberonEngine = engine;    
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                await Task.Delay(1000 * 60, stoppingToken);
-            }
+            _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+            return Task.Run(() => _oberonEngine.Run(stoppingToken));     
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
@@ -41,9 +38,7 @@ namespace JunoHost
 
             _robin.SpeakAsync("Starting Juno Service... Please stand by").Wait();
 
-            var task = Task.Run(() => _oberonEngine.Run(cancellationToken));
-
-            return task;
+            return base.StartAsync(cancellationToken);
         }
 
         public override Task StopAsync(CancellationToken cancellationToken)
