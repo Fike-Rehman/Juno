@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
@@ -9,8 +8,6 @@ namespace CTS.Oberon
 {
     public partial class OberonDevice : IDeviceOps
     {
-        //private readonly Logger<OberonDevice> _logger;
-
         public async Task StartPingRoutine(IProgress<string> progress, CancellationToken ct)
         {
             
@@ -37,11 +34,15 @@ namespace CTS.Oberon
             }
         }
 
-        public void StartMonitorRoutine()
+        public async Task StartMonitorRoutine(DateTime SunsetToday, IProgress<string> progress, CancellationToken ct)
         {
-            var monitorInterval = new TimeSpan(0, 0, 30); // every 30 secs
+            while(!ct.IsCancellationRequested)
+            {
+                await Task.Delay(new TimeSpan(0, 0, 0, 30));
 
-           // _deviceMonitorTimer = new Timer(OnMonitorTimer, null, monitorInterval, Timeout.InfiniteTimeSpan);
+                // Check to see if we are in off time block
+
+            }
         }
 
 
@@ -115,6 +116,13 @@ namespace CTS.Oberon
 
                 return pingResponse;
             }
+        }
+
+        private bool IsOffTimeBlock(DateTime sunsetToday)
+        {
+            bool result = true;
+
+            return result;
         }
 
 
