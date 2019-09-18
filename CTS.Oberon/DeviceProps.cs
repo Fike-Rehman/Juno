@@ -42,7 +42,7 @@ namespace CTS.Oberon
         /// Exact time when to turn the Sonoff Off each night (must be before midnight)
         /// </summary>
         [JsonProperty(PropertyName = "OffTime")]
-        public DateTime OnDuration { get; set; }
+        public DateTime OffTime { get; set; }
     }
 
     public enum PingResult
