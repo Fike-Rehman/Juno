@@ -38,9 +38,9 @@ namespace CTS.Oberon
         {
             while(!ct.IsCancellationRequested)
             {
-                await Task.Delay(new TimeSpan(0, 0, 0, 30));
+                await Task.Delay(new TimeSpan(0, 0, 0, 30)); // check every 30 secs
 
-                // Check to see if we are in off time block
+                
 
             }
         }
@@ -118,11 +118,37 @@ namespace CTS.Oberon
             }
         }
 
-        private bool IsOffTimeBlock(DateTime sunsetToday)
+        public void IsOffTimeBlock(DateTime sunsetToday)
         {
-            bool result = true;
+            //bool result = true;
 
-            return result;
+            // Check to see if we are in off time block
+
+            var currentTime = new DateTime(2019, 9, 24, 10, 35, 0);
+            var midnight = DateTime.Today;
+
+            Console.WriteLine($"Current Time: {currentTime.ToShortTimeString()}");
+
+            if(currentTime > midnight && currentTime <= midnight + AMOnTimeOffest)
+            {
+                Console.WriteLine("We are in block1 - lights off");
+            }
+            else if(currentTime >= midnight + AMOnTimeOffest && currentTime <= midnight + AMOnTimeOffest + AMOnDuration)
+            {
+                Console.WriteLine("We are in Block2 - lights on");
+            }
+            else if (currentTime >= midnight + AMOnTimeOffest + AMOnDuration  && currentTime <= sunsetToday)
+            {
+                Console.WriteLine("We are in Block3 - lights off");
+            }
+            else if (currentTime >= sunsetToday && currentTime <= OffTime)
+            {
+                Console.WriteLine("We are in Block4 - lights On");
+            }
+            else if (currentTime >= OffTime && currentTime <= midnight.AddDays(1))
+            {
+                Console.WriteLine("We are in Block5 - lights off");
+            }
         }
 
 
