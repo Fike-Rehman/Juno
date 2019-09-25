@@ -120,16 +120,14 @@ namespace CTS.Oberon
 
         public void IsOffTimeBlock(DateTime sunsetToday)
         {
-            //bool result = true;
+            var currentTime = new DateTime(2019, 9, 24, 18, 50, 0);
 
-            // Check to see if we are in off time block
-
-            var currentTime = new DateTime(2019, 9, 24, 10, 35, 0);
             var midnight = DateTime.Today;
+            var PMOnTime = sunsetToday + OnTimeOffset;
 
             Console.WriteLine($"Current Time: {currentTime.ToShortTimeString()}");
 
-            if(currentTime > midnight && currentTime <= midnight + AMOnTimeOffest)
+            if(currentTime >= midnight && currentTime <= midnight + AMOnTimeOffest)
             {
                 Console.WriteLine("We are in block1 - lights off");
             }
@@ -137,11 +135,11 @@ namespace CTS.Oberon
             {
                 Console.WriteLine("We are in Block2 - lights on");
             }
-            else if (currentTime >= midnight + AMOnTimeOffest + AMOnDuration  && currentTime <= sunsetToday)
+            else if (currentTime >= midnight + AMOnTimeOffest + AMOnDuration  && currentTime <= PMOnTime)
             {
                 Console.WriteLine("We are in Block3 - lights off");
             }
-            else if (currentTime >= sunsetToday && currentTime <= OffTime)
+            else if (currentTime >= PMOnTime && currentTime <= OffTime)
             {
                 Console.WriteLine("We are in Block4 - lights On");
             }
@@ -150,32 +148,5 @@ namespace CTS.Oberon
                 Console.WriteLine("We are in Block5 - lights off");
             }
         }
-
-
-        //private async void OnPingTimer(object device)
-        //{
-        //    // send a ping asynchronously and reset the timer
-
-        //    var response = await PingAsync(IpAddress);
-
-        //    if (response == "Success")
-        //    {
-        //        _logger.Debug($"Ping Acknowleged! Device Ip: {IpAddress}");
-        //        var pingInterval = new TimeSpan(0, 0, 1, 0); // 1 minute
-        //        _pingTimer.Change(pingInterval, Timeout.InfiniteTimeSpan);
-        //    }
-        //    else
-        //    {
-        //        // Device has failed to respond to the Ping request
-        //        _logger.Warn($"Device with Ip Address {IpAddress} is not responding to the Pings!");
-        //        _logger.Warn($"Please make sure this device is still on line");
-        //    }
-        //}
-
-        //private async void OnMonitorTimer(object device)
-        //{
-        //    // TODO: Implement device monitoring here.
-        //    await Task.Delay(3000);
-        //}
     }
 }
