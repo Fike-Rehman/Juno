@@ -118,28 +118,43 @@ namespace CTS.Oberon
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sunsetToday"></param>
         public void IsOffTimeBlock(DateTime sunsetToday)
         {
-            var currentTime = new DateTime(2019, 9, 24, 18, 50, 0);
+            // var currentTime = new DateTime(2019, 10, 1, 23, 50, 0);
+            var currentTime = DateTime.Now;
 
             var midnight = DateTime.Today;
             var PMOnTime = sunsetToday + OnTimeOffset;
 
             Console.WriteLine($"Current Time: {currentTime.ToShortTimeString()}");
 
-            if(currentTime >= midnight && currentTime <= midnight + AMOnTimeOffest)
+            if (AMOnTimeOffest > TimeSpan.Zero) // AM OnTime is specified.
             {
-                Console.WriteLine("We are in block1 - lights off");
+                if (currentTime >= midnight && currentTime <= midnight + AMOnTimeOffest)
+                {
+                    Console.WriteLine("We are in block1 - lights off");
+                }
+                else if (currentTime >= midnight + AMOnTimeOffest && currentTime <= midnight + AMOnTimeOffest + AMOnDuration)
+                {
+                    Console.WriteLine("We are in Block2 - lights on");
+                }
+                else if (currentTime >= midnight + AMOnTimeOffest + AMOnDuration && currentTime <= PMOnTime)
+                {
+                    Console.WriteLine("We are in Block3 - lights off");
+                } 
             }
-            else if(currentTime >= midnight + AMOnTimeOffest && currentTime <= midnight + AMOnTimeOffest + AMOnDuration)
+            else
             {
-                Console.WriteLine("We are in Block2 - lights on");
+                // No morning OnTime specified. Keep light off
+                Console.WriteLine("No morning OnTime blocks. Lights off");
             }
-            else if (currentTime >= midnight + AMOnTimeOffest + AMOnDuration  && currentTime <= PMOnTime)
-            {
-                Console.WriteLine("We are in Block3 - lights off");
-            }
-            else if (currentTime >= PMOnTime && currentTime <= OffTime)
+
+            // Evening On Times:
+            if (currentTime >= PMOnTime && currentTime <= OffTime)
             {
                 Console.WriteLine("We are in Block4 - lights On");
             }

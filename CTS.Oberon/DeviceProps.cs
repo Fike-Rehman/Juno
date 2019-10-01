@@ -18,14 +18,14 @@ namespace CTS.Oberon
         public string Location { get; set; }
 
         /// <summary>
-        /// Timespan from midnight to turn the SONOFF on
+        /// Timespan from midnight to SONOFF AM on time
         /// Set this to negative if no Morning OnTimne is needed
         /// </summary>
         [JsonProperty(PropertyName = "AMOnTimeOffset")]
         public TimeSpan AMOnTimeOffest { get; set; }
 
         /// <summary>
-        /// Duration from AMOnTimeOffeset to keep the SONOFF On
+        /// Duration to keep the SONOFF On starting from AMOnTimeOffset
         /// This setting is disregarded if AMOnTimeOffset is negative 
         /// </summary>
         [JsonProperty(PropertyName = "AMOnDuration")]
@@ -33,7 +33,7 @@ namespace CTS.Oberon
 
         /// <summary>
         /// Timespan from today's Sunset Time to turn the SONOFF On
-        /// Can be positive (before sunset) or Negative (After sunset)
+        /// Can be positive (after sunset) or Negative (before sunset)
         /// </summary>
         [JsonProperty(PropertyName = "OnTimeOffset")]
         public TimeSpan OnTimeOffset { get; set; }
