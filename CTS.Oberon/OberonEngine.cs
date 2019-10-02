@@ -38,7 +38,7 @@ namespace CTS.Oberon
             LoadDevices();
 
             // _oberonDevices[1].IsOffTimeBlock(_sunsetToday);
-            _oberonDevices[0].GetDeviceStatusAsync().Wait();
+            //_oberonDevices[0].GetDeviceStatusAsync().Wait();
 
             // Initialize the devices found:
             InitDevicesAsync(cToken).Wait();
@@ -57,6 +57,8 @@ namespace CTS.Oberon
                 var progress = new Progress<string>(LogProgress);
 
                 var pt = Task.Run(() => d.StartPingRoutine(progress, cToken));
+
+                
                 pingTasks.Add(pt); 
             });
         }

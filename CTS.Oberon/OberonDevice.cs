@@ -13,7 +13,7 @@ namespace CTS.Oberon
             
             while(!ct.IsCancellationRequested)
             {
-                await Task.Delay(new TimeSpan(0, 0, 1, 0));
+                await Task.Delay(new TimeSpan(0, 0, 1, 0), ct);
 
                 if(!ct.IsCancellationRequested)
                 {
@@ -21,13 +21,13 @@ namespace CTS.Oberon
 
                     if (response == "Success")
                     {
-                        progress?.Report($"Ping Acknowleged! Device Ip: {IpAddress}");
+                        progress?.Report($"Ping Acknowleged by Oberon device: {Name}, Location {Location}");
                        
                     }
                     else
                     {
                         // Device has failed to respond to the Ping request
-                        progress?.Report($"Device with Ip Address {IpAddress} is not responding to the Pings!");
+                        progress?.Report($"Oberon device with Ip Address {IpAddress} is not responding to the Pings!");
                         progress?.Report($"Please make sure this device is still on line");
                     }
                 }
@@ -38,46 +38,66 @@ namespace CTS.Oberon
         {
             while(!ct.IsCancellationRequested)
             {
-                await Task.Delay(new TimeSpan(0, 0, 0, 30)); // check every 30 secs
-
-                if(!ct.IsCancellationRequested)
+                if(IsOffTimeBlock(sunsetToday))
                 {
-                    if(IsOffTimeBlock(sunsetToday))
+                    // get the current device status:
+                    var dStatus = await GetDeviceStatusAsync();
+
+                    if(dStatus == "ON")
                     {
-                        // send request to turn Oberon Off
+                        // send the request to turn device off
                         var response = await DeviceOffAsync();
 
-                        if (response == "Success")
+                        if(response == "Success")
                         {
-                            progress?.Report($"Device turned off successfully! Device Ip: {IpAddress}");
+                            progress?.Report($"Oberon device: {Name}, Location: {Location} turned off at {DateTime.Now}");
                         }
                         else
                         {
-                            // Device has failed to respond to the off request
-                            progress?.Report($"Device with Ip Address {IpAddress} is not responding to 'off' request!");
-                            progress?.Report($"Reponse Message: {response}");
-                            progress?.Report($"Please make sure this device is still on line");
+                            progress?.Report($"Oberon device with Ip Address {IpAddress} failed to respond to Off request");
+                            progress?.Report($"{response}");
                         }
-
                     }
-                    else
+                    else if(dStatus.StartsWith("UNKNOWN", StringComparison.Ordinal))
                     {
-                        // send request to keep it on
+                        // failed to get the device status, report
+                        progress?.Report($"Failed to get Oberon device status! Ip: {IpAddress}");
+                        progress?.Report($"{dStatus}");
+                    }
+                    // else device is alreay OFF, do nothing.
+                }
+                else
+                {
+                    // device must be On
+                    // get the current device status:
+                    var dStatus = await GetDeviceStatusAsync();
+
+                    if(dStatus == "OFF")
+                    {
+                        // send the request to turn device On
                         var response = await DeviceOnAsync();
 
                         if (response == "Success")
                         {
-                            progress?.Report($"Device turned On successfully! Device Ip: {IpAddress}");
+                            progress?.Report($"Oberon device: {Name}, Location: {Location} turned On at {DateTime.Now}");
                         }
                         else
                         {
-                            // Device has failed to respond to the On request
-                            progress?.Report($"Device with Ip Address {IpAddress} is not responding to 'On' request!");
-                            progress?.Report($"Please make sure this device is still on line");
+                            progress?.Report($"Oberon device with Ip Address {IpAddress} failed to respond to On request");
+                            progress?.Report($"{response}");
                         }
 
                     }
+                    else if (dStatus.StartsWith("UNKNOWN", StringComparison.Ordinal))
+                    {
+                        // failed to get the device status, report
+                        progress?.Report($"Failed to get Oberon device status {IpAddress}");
+                        progress?.Report($"{dStatus}");
+                    }
+                    // else device is already On, do nothing.
                 }
+
+                await Task.Delay(new TimeSpan(0, 0, 0, 30), ct); // check every 30 secs        
             }
         }
 
@@ -220,7 +240,7 @@ namespace CTS.Oberon
 
         public async Task<string> GetDeviceStatusAsync()
         {
-            var dStatus = "";
+            var dStatus = "UNKNOWN";
 
             using (var client = new HttpClient())
             {
@@ -233,23 +253,29 @@ namespace CTS.Oberon
                 {
                     var response = await client.GetAsync("/status");
 
-
                     if (response.IsSuccessStatusCode)
                     {
                         //parse the message content
-                        dStatus = await response.Content.ReadAsStringAsync();
-                    }
+                        var responseString = await response.Content.ReadAsStringAsync();
 
+                        if (responseString.EndsWith("ON", StringComparison.Ordinal))
+                        {
+                            dStatus = "ON";
+                        }
+                        else if(responseString.EndsWith("OFF", StringComparison.Ordinal))
+                        {
+                            dStatus = "OFF";
+                        }
+                    }
                 }
                 catch (Exception x)
                 {
                     // the request takes longer than 10 secs, it is timed out
-                    dStatus = x.Message;
+                    dStatus = ": " + x.Message;
                 }
 
                 return dStatus;
             }
-
         }
 
 
