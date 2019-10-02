@@ -37,7 +37,8 @@ namespace CTS.Oberon
             // See how many Oberon devices we have in the system:
             LoadDevices();
 
-           // _oberonDevices[1].IsOffTimeBlock(_sunsetToday);
+            // _oberonDevices[1].IsOffTimeBlock(_sunsetToday);
+            _oberonDevices[0].GetDeviceStatusAsync().Wait();
 
             // Initialize the devices found:
             InitDevicesAsync(cToken).Wait();

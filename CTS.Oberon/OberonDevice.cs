@@ -17,7 +17,7 @@ namespace CTS.Oberon
 
                 if(!ct.IsCancellationRequested)
                 {
-                    var response = await PingAsync(IpAddress);
+                    var response = await PingAsync();
 
                     if (response == "Success")
                     {
@@ -45,17 +45,17 @@ namespace CTS.Oberon
                     if(IsOffTimeBlock(sunsetToday))
                     {
                         // send request to turn Oberon Off
-                        var response = await DeviceOffAsync(IpAddress);
+                        var response = await DeviceOffAsync();
 
                         if (response == "Success")
                         {
                             progress?.Report($"Device turned off successfully! Device Ip: {IpAddress}");
-
                         }
                         else
                         {
                             // Device has failed to respond to the off request
                             progress?.Report($"Device with Ip Address {IpAddress} is not responding to 'off' request!");
+                            progress?.Report($"Reponse Message: {response}");
                             progress?.Report($"Please make sure this device is still on line");
                         }
 
@@ -63,12 +63,11 @@ namespace CTS.Oberon
                     else
                     {
                         // send request to keep it on
-                        var response = await DeviceOnAsync(IpAddress);
+                        var response = await DeviceOnAsync();
 
                         if (response == "Success")
                         {
                             progress?.Report($"Device turned On successfully! Device Ip: {IpAddress}");
-
                         }
                         else
                         {
@@ -97,7 +96,7 @@ namespace CTS.Oberon
 
                 progress?.Report($"Sending ping request to device:{IpAddress}; Attempt # {n}");
 
-                var pingresponse = await PingAsync(deviceIp);
+                var pingresponse = await PingAsync();
 
                 if (pingresponse == "Success")
                 {
@@ -123,13 +122,13 @@ namespace CTS.Oberon
             return result;
         }
 
-        private async Task<string> PingAsync(string deviceIp)
+        private async Task<string> PingAsync()
         {
             var pingResponse = "";
 
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri($"http://{deviceIp}");
+                client.BaseAddress = new Uri($"http://{IpAddress}");
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
                 client.Timeout = TimeSpan.FromMilliseconds(10000);
@@ -155,13 +154,13 @@ namespace CTS.Oberon
             }
         }
 
-        private async Task<string> DeviceOffAsync(string deviceIp)
+        private async Task<string> DeviceOffAsync()
         {
             var offResponse = "";
 
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri($"http://{deviceIp}");
+                client.BaseAddress = new Uri($"http://{IpAddress}");
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
                 client.Timeout = TimeSpan.FromMilliseconds(10000);
@@ -187,13 +186,13 @@ namespace CTS.Oberon
             }
         }
 
-        private async Task<string> DeviceOnAsync(string deviceIp)
+        private async Task<string> DeviceOnAsync()
         {
             var onResponse = "";
 
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri($"http://{deviceIp}");
+                client.BaseAddress = new Uri($"http://{IpAddress}");
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
                 client.Timeout = TimeSpan.FromMilliseconds(10000);
@@ -217,6 +216,40 @@ namespace CTS.Oberon
 
                 return onResponse;
             }
+        }
+
+        public async Task<string> GetDeviceStatusAsync()
+        {
+            var dStatus = "";
+
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri($"http://{IpAddress}");
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
+                client.Timeout = TimeSpan.FromMilliseconds(10000);
+
+                try
+                {
+                    var response = await client.GetAsync("/status");
+
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        //parse the message content
+                        dStatus = await response.Content.ReadAsStringAsync();
+                    }
+
+                }
+                catch (Exception x)
+                {
+                    // the request takes longer than 10 secs, it is timed out
+                    dStatus = x.Message;
+                }
+
+                return dStatus;
+            }
+
         }
 
 
