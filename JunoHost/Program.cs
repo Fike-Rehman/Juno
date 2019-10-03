@@ -12,14 +12,13 @@ namespace JunoHost
         {
             try
             {
-                Console.WriteLine("Hello World!");
+                Console.WriteLine("*** Welcome to Juno ***");
                 CreateHostBuilder(args).Build().Run();
             }
             catch(Exception x)
             {
                 Console.WriteLine($"Juno Service was stopped by the user; {x.Message}");
-            }
-            
+            }  
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>

@@ -8,6 +8,12 @@ namespace CTS.Oberon
 {
     public partial class OberonDevice : IDeviceOps
     {
+        /// <summary>
+        /// Sends a Ping message to this device every one minute
+        /// </summary>
+        /// <param name="progress"> object to report progress</param>
+        /// <param name="ct"> cancellation token</param>
+        /// <returns></returns>
         public async Task StartPingRoutine(IProgress<string> progress, CancellationToken ct)
         {
             
@@ -34,6 +40,13 @@ namespace CTS.Oberon
             }
         }
 
+        /// <summary>
+        ///  Set the Oberon Relay ON or Off based on the device settings and today's Sunset time
+        /// </summary>
+        /// <param name="sunsetToday"></param>
+        /// <param name="progress"></param>
+        /// <param name="ct"></param>
+        /// <returns></returns>
         public async Task StartMonitorRoutine(DateTime sunsetToday, IProgress<string> progress, CancellationToken ct)
         {
             while(!ct.IsCancellationRequested)

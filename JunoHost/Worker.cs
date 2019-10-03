@@ -25,10 +25,16 @@ namespace JunoHost
             _oberonEngine = engine;    
         }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            return Task.Run(() => _oberonEngine.Run(stoppingToken));     
+            // Start the Oberon Engine
+            var t =  Task.Run(() => _oberonEngine.Run(stoppingToken));
+
+            _logger.LogInformation($"Oberon engine was started at {DateTimeOffset.Now}");
+
+            await Task.Delay(1000, stoppingToken);
+
+            // Any other engines can be started here:       
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
