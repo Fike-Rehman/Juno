@@ -305,8 +305,8 @@ namespace CTS.Oberon
         /// <param name="sunsetToday"></param>
         private bool IsOffTimeBlock(DateTime sunsetToday)
         {   
-            var currentTime = new DateTime(2019, 10, 1, 19, 50, 0);
-           // var currentTime = DateTime.Now;
+            //var currentTime = new DateTime(2019, 10, 1, 19, 50, 0);
+            var currentTime = DateTime.Now;
 
             var midnight = DateTime.Today;
             var PMOnTime = sunsetToday + OnTimeOffset;

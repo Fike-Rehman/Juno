@@ -4,10 +4,10 @@
     "Name": "Oberon1",
     "IpAddress": "192.168.50.65",
     "Location": "office",
-    "AMOnTimeOffset": "-01:00:00",
-    "AMOnDuration":  "02:30:00",
-    "OnTimeOffset": "02:00:00",
-    "OffTime": "23:15:00"
+    "AMOnTimeOffset": "06:30:00",
+    "AMOnDuration":  "02:00:00",
+    "OnTimeOffset": "-01:00:00",
+    "OffTime": "23:20:00"
   },
   {
     "Id": "02",
@@ -17,6 +17,6 @@
     "AMOnTimeOffset": "0",
     "AMOnDuration": "02:30:00",
     "OnTimeOffset": "-00:15:00",
-    "OffTime": "23:15:00"
+    "OffTime": "23:20:00"
   }
 ]
