@@ -105,7 +105,9 @@ namespace CTS.Oberon
         {
             try
             {
-                using (StreamReader file = File.OpenText("OberonDevices.json"))
+               // string path = Directory.GetCurrentDirectory();
+
+                using (StreamReader file = File.OpenText("C:\\Program Files\\CTS\\Juno\\OberonDevices.json"))
                 {
                     // var serialize = new JsonSerializer();
                     string jsonString = file.ReadToEnd();
