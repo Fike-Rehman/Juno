@@ -114,6 +114,40 @@ namespace CTS.Oberon
             }
         }
 
+        public async Task StartMonitorRouting(IProgress<string> progress, CancellationToken ct)
+        {
+            var sunsetCheckTime = DateTime.Today;
+
+            while (!ct.IsCancellationRequested)
+            {
+                var currentTime = DateTime.Now;
+                var midnight = DateTime.Today;
+
+                if (currentTime == midnight.AddMinutes(1))
+                {
+                    // TODO: call back engine to refresh sunset time here
+                    
+                }
+
+
+                if(currentTime >= midnight && currentTime < midnight + AMOnTimeOffest)
+                {
+                    // turn light off
+
+                     await Task.Delay(AMOnTimeOffest, ct); 
+                }
+
+                if(currentTime >= midnight + AMOnTimeOffest && currentTime <= midnight + AMOnTimeOffest + AMOnDuration)
+                {
+                    // turn lights ON
+
+                    await Task.Delay(AMOnDuration, ct);
+                }
+            }
+
+        }
+
+
 
         public async Task<PingResult> DevicePingAsync(string deviceIp, IProgress<string> progress, CancellationToken ct)
         {
