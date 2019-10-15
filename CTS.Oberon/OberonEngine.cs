@@ -28,14 +28,14 @@ namespace CTS.Oberon
 
             _logger.LogInformation("Beginning Oberon Activties...");
 
-            // Get the sunrise/sunset times 
-            SolarTimes.GetSolarTimes(out DateTime _sunriseToday, 
-                                     out DateTime _sunsetToday);
-
-            _logger.LogInformation($"Today's Sunset time: {_sunsetToday}");
-
+           
             // See how many Oberon devices we have in the system:
             LoadDevices();
+
+            Task.Run(() => _oberonDevices[0].StartMonitorRoutine(RefreshSunsetTime,
+                                                                 new Progress<string>(LogProgress),
+                                                                 cToken));
+
 
             // _oberonDevices[1].IsOffTimeBlock(_sunsetToday);
             //_oberonDevices[0].GetDeviceStatusAsync().Wait();
@@ -70,7 +70,7 @@ namespace CTS.Oberon
                 {
                     if (cToken.IsCancellationRequested) return;
 
-                    var mt = Task.Run(() => d.StartMonitorRoutine(_sunsetToday,
+                    var mt = Task.Run(() => d.StartMonitorRoutine(RefreshSunsetTime,
                                                                   new Progress<string>(LogProgress),
                                                                   cToken));
 
@@ -87,6 +87,16 @@ namespace CTS.Oberon
                 _logger.LogError(x.Message);
                 _logger.LogError(x.InnerException.Message);
             }
+        }
+
+        public DateTime RefreshSunsetTime()
+        {
+            // Get the sunrise/sunset times 
+            SolarTimes.GetSolarTimes(out DateTime _sunriseToday,
+                                     out DateTime _sunsetToday);
+
+            _logger.LogInformation($"Today's Sunset time: {_sunsetToday}");
+            return _sunsetToday;
         }
 
         /// <summary>
@@ -107,7 +117,7 @@ namespace CTS.Oberon
             {
                // string path = Directory.GetCurrentDirectory();
 
-                using (StreamReader file = File.OpenText("C:\\Program Files\\CTS\\Juno\\OberonDevices.json"))
+                using (StreamReader file = File.OpenText("OberonDevices.json"))
                 {
                     // var serialize = new JsonSerializer();
                     string jsonString = file.ReadToEnd();

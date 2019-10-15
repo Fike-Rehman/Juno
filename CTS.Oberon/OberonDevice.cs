@@ -40,112 +40,172 @@ namespace CTS.Oberon
             }
         }
 
-        /// <summary>
-        ///  Set the Oberon Relay ON or Off based on the device settings and today's Sunset time
-        /// </summary>
-        /// <param name="sunsetToday"></param>
-        /// <param name="progress"></param>
-        /// <param name="ct"></param>
-        /// <returns></returns>
-        public async Task StartMonitorRoutine(DateTime sunsetToday, IProgress<string> progress, CancellationToken ct)
+        ///// <summary>
+        /////  Set the Oberon Relay ON or Off based on the device settings and today's Sunset time
+        ///// </summary>
+        ///// <param name="sunsetToday"></param>
+        ///// <param name="progress"></param>
+        ///// <param name="ct"></param>
+        ///// <returns></returns>
+        //public async Task StartMonitorRoutine(DateTime sunsetToday, IProgress<string> progress, CancellationToken ct)
+        //{
+        //    while(!ct.IsCancellationRequested)
+        //    {
+        //        if(IsOffTimeBlock(sunsetToday))
+        //        {
+        //            // get the current device status:
+        //            var dStatus = await GetDeviceStatusAsync();
+
+        //            if(dStatus == "ON")
+        //            {
+        //                // send the request to turn device off
+        //                var response = await DeviceOffAsync();
+
+        //                if(response == "Success")
+        //                {
+        //                    progress?.Report($"Oberon device: {Name}, Location: {Location} turned off at {DateTime.Now}");
+        //                }
+        //                else
+        //                {
+        //                    progress?.Report($"Oberon device with Ip Address {IpAddress} failed to respond to Off request");
+        //                    progress?.Report($"{response}");
+        //                }
+        //            }
+        //            else if(dStatus.StartsWith("UNKNOWN", StringComparison.Ordinal))
+        //            {
+        //                // failed to get the device status, report
+        //                progress?.Report($"Failed to get Oberon device status! Ip: {IpAddress}");
+        //                progress?.Report($"{dStatus}");
+        //            }
+        //            // else device is alreay OFF, do nothing.
+        //        }
+        //        else
+        //        {
+        //            // device must be On
+        //            // get the current device status:
+        //            var dStatus = await GetDeviceStatusAsync();
+
+        //            if(dStatus == "OFF")
+        //            {
+        //                // send the request to turn device On
+        //                var response = await DeviceOnAsync();
+
+        //                if (response == "Success")
+        //                {
+        //                    progress?.Report($"Oberon device: {Name}, Location: {Location} turned On at {DateTime.Now}");
+        //                }
+        //                else
+        //                {
+        //                    progress?.Report($"Oberon device with Ip Address {IpAddress} failed to respond to On request");
+        //                    progress?.Report($"{response}");
+        //                }
+
+        //            }
+        //            else if (dStatus.StartsWith("UNKNOWN", StringComparison.Ordinal))
+        //            {
+        //                // failed to get the device status, report
+        //                progress?.Report($"Failed to get Oberon device status {IpAddress}");
+        //                progress?.Report($"{dStatus}");
+        //            }
+        //            // else device is already On, do nothing.
+        //        }
+
+        //        await Task.Delay(new TimeSpan(0, 0, 0, 30), ct); // check every 30 secs        
+        //    }
+        //}
+
+        public void StartMonitorRoutine(Func<DateTime> SunsetToday, IProgress<string> progress, CancellationToken ct)
         {
-            while(!ct.IsCancellationRequested)
-            {
-                if(IsOffTimeBlock(sunsetToday))
-                {
-                    // get the current device status:
-                    var dStatus = await GetDeviceStatusAsync();
-
-                    if(dStatus == "ON")
-                    {
-                        // send the request to turn device off
-                        var response = await DeviceOffAsync();
-
-                        if(response == "Success")
-                        {
-                            progress?.Report($"Oberon device: {Name}, Location: {Location} turned off at {DateTime.Now}");
-                        }
-                        else
-                        {
-                            progress?.Report($"Oberon device with Ip Address {IpAddress} failed to respond to Off request");
-                            progress?.Report($"{response}");
-                        }
-                    }
-                    else if(dStatus.StartsWith("UNKNOWN", StringComparison.Ordinal))
-                    {
-                        // failed to get the device status, report
-                        progress?.Report($"Failed to get Oberon device status! Ip: {IpAddress}");
-                        progress?.Report($"{dStatus}");
-                    }
-                    // else device is alreay OFF, do nothing.
-                }
-                else
-                {
-                    // device must be On
-                    // get the current device status:
-                    var dStatus = await GetDeviceStatusAsync();
-
-                    if(dStatus == "OFF")
-                    {
-                        // send the request to turn device On
-                        var response = await DeviceOnAsync();
-
-                        if (response == "Success")
-                        {
-                            progress?.Report($"Oberon device: {Name}, Location: {Location} turned On at {DateTime.Now}");
-                        }
-                        else
-                        {
-                            progress?.Report($"Oberon device with Ip Address {IpAddress} failed to respond to On request");
-                            progress?.Report($"{response}");
-                        }
-
-                    }
-                    else if (dStatus.StartsWith("UNKNOWN", StringComparison.Ordinal))
-                    {
-                        // failed to get the device status, report
-                        progress?.Report($"Failed to get Oberon device status {IpAddress}");
-                        progress?.Report($"{dStatus}");
-                    }
-                    // else device is already On, do nothing.
-                }
-
-                await Task.Delay(new TimeSpan(0, 0, 0, 30), ct); // check every 30 secs        
-            }
-        }
-
-        public async Task StartMonitorRouting(IProgress<string> progress, CancellationToken ct)
-        {
-            var sunsetCheckTime = DateTime.Today;
-
+           
             while (!ct.IsCancellationRequested)
             {
-                var currentTime = DateTime.Now;
-                var midnight = DateTime.Today;
+                var sunset = SunsetToday();
+                var PMOnTime = sunset - OnTimeOffset;
 
-                if (currentTime == midnight.AddMinutes(1))
-                {
-                    // TODO: call back engine to refresh sunset time here
-                    
-                }
-
-
-                if(currentTime >= midnight && currentTime < midnight + AMOnTimeOffest)
-                {
-                    // turn light off
-
-                     await Task.Delay(AMOnTimeOffest, ct); 
-                }
-
-                if(currentTime >= midnight + AMOnTimeOffest && currentTime <= midnight + AMOnTimeOffest + AMOnDuration)
-                {
-                    // turn lights ON
-
-                    await Task.Delay(AMOnDuration, ct);
-                }
+                Monitor(PMOnTime, ct);
             }
 
         }
+
+        private void Monitor(DateTime PMOnTime, CancellationToken ct)
+        {
+            var currentTime = DateTime.Now;
+            var midnight = DateTime.Today;
+
+
+            if (currentTime >= midnight && currentTime < midnight + AMOnTimeOffest)
+            {
+                Console.WriteLine("In Block1: turning lights off");
+                var delaySpan = midnight + AMOnTimeOffest - currentTime;
+                Console.WriteLine($"wait started at : {DateTime.Now.ToShortTimeString()}");
+                Console.WriteLine($"delay span: {delaySpan}");
+                var t = Task.Delay(delaySpan, ct);
+
+                
+                ct.WaitHandle.WaitOne(delaySpan);
+                Console.WriteLine("exiting...");
+                return;
+            }
+
+            if (currentTime >= midnight + AMOnTimeOffest && currentTime <= midnight + AMOnTimeOffest + AMOnDuration)
+            {
+                
+                Console.WriteLine("In Block2: turning lights on");
+                // turn lights ON
+
+                var delayspan = midnight + AMOnTimeOffest + AMOnDuration - currentTime;
+
+                Console.WriteLine($"wait started at : {DateTime.Now.ToShortTimeString()}");
+                Console.WriteLine($"delay span: {delayspan}");
+
+                
+                Task.Delay(delayspan, ct);
+                Console.WriteLine("exiting...");
+                return;
+            }
+
+            if (currentTime >= midnight + AMOnTimeOffest + AMOnDuration && currentTime < PMOnTime)
+            {
+                Console.WriteLine("In Block3: turning lights off");
+                // turn lights OFF
+
+                var delayspan = PMOnTime - currentTime;
+                Console.WriteLine($"wait started at : {DateTime.Now.ToShortTimeString()}");
+                Console.WriteLine($"delay span: {delayspan}");
+                Task.Delay(delayspan, ct);
+                Console.WriteLine("exiting...");
+                return;
+            }
+
+            if (currentTime >= PMOnTime && currentTime < OffTime)
+            {
+                Console.WriteLine("In Block4: turning lights On");
+                // turn lights ON
+
+                var delayspan = OffTime - currentTime;
+                Console.WriteLine($"wait started at : {DateTime.Now.ToShortTimeString()}");
+                Console.WriteLine($"delay span: {delayspan}");
+                Task.Delay(delayspan, ct);
+                Console.WriteLine("exiting...");
+                return;
+            }
+
+            if (currentTime >= OffTime && currentTime < DateTime.Today.AddDays(1))
+            {
+                Console.WriteLine("In Block5: turning lights off");
+                // turn lights OFF
+
+                var delayspan = DateTime.Today.AddDays(1) - currentTime;
+                Console.WriteLine($"wait started at : {DateTime.Now.ToShortTimeString()}");
+                Console.WriteLine($"delay span: {delayspan}");
+                Task.Delay(delayspan, ct);
+                Console.WriteLine("exiting...");
+                return;
+            }
+        }
+
+
+   
 
 
 
