@@ -129,7 +129,7 @@ namespace CTS.Oberon
 
         public void Monitor(DateTime PMOnTime, CancellationToken ct)
         {
-            var currentTime = DateTime.Today.AddHours(2);
+            var currentTime = DateTime.Now;
             var midnight = DateTime.Today;
 
 

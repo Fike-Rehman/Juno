@@ -36,7 +36,11 @@ namespace CTS.Oberon
             //                                                     new Progress<string>(LogProgress),
             //                                                     cToken));
 
-            Task.Run(() => _oberonDevices[0].Monitor(new DateTime(2019, 10, 15, 6, 30, 0), cToken));
+            Task.Run(() => _oberonDevices[0].Monitor(new DateTime(2019, 10, 15, 18, 30, 0), cToken), cToken);
+
+            cToken.WaitHandle.WaitOne(15 * 1000);
+
+            
 
 
             // _oberonDevices[1].IsOffTimeBlock(_sunsetToday);
