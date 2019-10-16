@@ -127,9 +127,9 @@ namespace CTS.Oberon
 
         }
 
-        private void Monitor(DateTime PMOnTime, CancellationToken ct)
+        public void Monitor(DateTime PMOnTime, CancellationToken ct)
         {
-            var currentTime = DateTime.Now;
+            var currentTime = DateTime.Today.AddHours(2);
             var midnight = DateTime.Today;
 
 
@@ -139,10 +139,11 @@ namespace CTS.Oberon
                 var delaySpan = midnight + AMOnTimeOffest - currentTime;
                 Console.WriteLine($"wait started at : {DateTime.Now.ToShortTimeString()}");
                 Console.WriteLine($"delay span: {delaySpan}");
-                var t = Task.Delay(delaySpan, ct);
+
+                Task.Delay(delaySpan, ct).Wait();
 
                 
-                ct.WaitHandle.WaitOne(delaySpan);
+                
                 Console.WriteLine("exiting...");
                 return;
             }

@@ -3,6 +3,7 @@ using CTS.Oberon;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,6 +28,8 @@ namespace JunoHost
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            var apptasks = new List<Task>();
+
             // Start the Oberon Engine
             var t =  Task.Run(() => _oberonEngine.Run(stoppingToken));
 
@@ -34,7 +37,10 @@ namespace JunoHost
 
             await Task.Delay(1000, stoppingToken);
 
-            // Any other engines can be started here:       
+            // Any other engines can be started here: 
+            
+            
+            
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)

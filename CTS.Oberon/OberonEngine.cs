@@ -32,61 +32,63 @@ namespace CTS.Oberon
             // See how many Oberon devices we have in the system:
             LoadDevices();
 
-            Task.Run(() => _oberonDevices[0].StartMonitorRoutine(RefreshSunsetTime,
-                                                                 new Progress<string>(LogProgress),
-                                                                 cToken));
+            //Task.Run(() => _oberonDevices[0].StartMonitorRoutine(RefreshSunsetTime,
+            //                                                     new Progress<string>(LogProgress),
+            //                                                     cToken));
+
+            Task.Run(() => _oberonDevices[0].Monitor(new DateTime(2019, 10, 15, 6, 30, 0), cToken));
 
 
             // _oberonDevices[1].IsOffTimeBlock(_sunsetToday);
             //_oberonDevices[0].GetDeviceStatusAsync().Wait();
 
             // Initialize the devices found:
-            InitDevicesAsync(cToken).Wait();
+            //InitDevicesAsync(cToken).Wait();
 
-            // Start the Task to run the Ping routines for each device:
-            _logger.LogInformation("Device initialization Completed!");
-            _logger.LogInformation($"{_oberonDevices.Count} active Oberon devices(s) detected during initialization!");
+            //// Start the Task to run the Ping routines for each device:
+            //_logger.LogInformation("Device initialization Completed!");
+            //_logger.LogInformation($"{_oberonDevices.Count} active Oberon devices(s) detected during initialization!");
 
-            try
-            {
-                var oberonTasks = new List<Task>();
+            //try
+            //{
+            //    var oberonTasks = new List<Task>();
 
-                // Launch ping routines for all the initialized devices:
-                _oberonDevices.ForEach(d =>
-                {
-                    if (cToken.IsCancellationRequested) return;
+            //    // Launch ping routines for all the initialized devices:
+            //    _oberonDevices.ForEach(d =>
+            //    {
+            //        if (cToken.IsCancellationRequested) return;
 
-                    var pt = Task.Run(() => d.StartPingRoutine(new Progress<string>(LogProgress), cToken));
+            //        var pt = Task.Run(() => d.StartPingRoutine(new Progress<string>(LogProgress), cToken));
 
-                    _logger.LogInformation($"Ping routine for Oberon device :{d.Name} started!");
+            //        _logger.LogInformation($"Ping routine for Oberon device :{d.Name} started!");
 
-                    oberonTasks.Add(pt);
-                });
+            //        oberonTasks.Add(pt);
+            //    });
 
-                Task.Delay(1000, cToken);
+            //    Task.Delay(1000, cToken);
 
-                // Launch Monitor routines for all the initialized devices:
-                _oberonDevices.ForEach(d =>
-                {
-                    if (cToken.IsCancellationRequested) return;
+            //    // Launch Monitor routines for all the initialized devices:
+            //    _oberonDevices.ForEach(d =>
+            //    {
+            //        if (cToken.IsCancellationRequested) return;
 
-                    var mt = Task.Run(() => d.StartMonitorRoutine(RefreshSunsetTime,
-                                                                  new Progress<string>(LogProgress),
-                                                                  cToken));
+            //        var mt = Task.Run(() => d.StartMonitorRoutine(RefreshSunsetTime,
+            //                                                      new Progress<string>(LogProgress),
+            //                                                      cToken));
 
-                    _logger.LogInformation($"Monitor routine for Oberon device :{d.Name} started!");
+            //        _logger.LogInformation($"Monitor routine for Oberon device :{d.Name} started!");
 
-                    oberonTasks.Add(mt);
-                });
+            //        oberonTasks.Add(mt);
+            //    });
 
-                Task.WaitAll(oberonTasks.ToArray());
-            }
-            catch (Exception x)
-            {
-                _logger.LogError("Exception while running Oberon Tasks!");
-                _logger.LogError(x.Message);
-                _logger.LogError(x.InnerException.Message);
-            }
+            //    Task.WaitAll(oberonTasks.ToArray());
+            //}
+            //catch (Exception x)
+            //{
+            //    _logger.LogError("Exception while running Oberon Tasks!");
+            //    _logger.LogError(x.Message);
+            //    _logger.LogError(x.InnerException.Message);
+            //}
         }
 
         public DateTime RefreshSunsetTime()
