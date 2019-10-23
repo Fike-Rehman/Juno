@@ -114,20 +114,22 @@ namespace CTS.Oberon
         //    }
         //}
 
-        public void StartMonitorRoutine(Func<DateTime> SunsetToday, IProgress<string> progress, CancellationToken ct)
+        public async Task StartMonitorRoutine(Func<DateTime> SunsetToday, IProgress<string> progress, CancellationToken ct)
         {
-           
+            progress.Report($"Starting Monitor routine for device: {Name}...");
+
+
             while (!ct.IsCancellationRequested)
             {
                 var sunset = SunsetToday();
                 var PMOnTime = sunset - OnTimeOffset;
 
-                Monitor(PMOnTime, ct);
+               await Monitor(PMOnTime, progress, ct);
             }
 
         }
 
-        public void Monitor(DateTime PMOnTime, CancellationToken ct)
+        private async Task Monitor(DateTime PMOnTime, IProgress<string> progress, CancellationToken ct)
         {
             var currentTime = DateTime.Now;
             var midnight = DateTime.Today;
@@ -136,6 +138,19 @@ namespace CTS.Oberon
             if (currentTime >= midnight && currentTime < midnight + AMOnTimeOffest)
             {
                 Console.WriteLine("In Block1: turning lights off");
+
+                progress.Report($"Turning {Name} off at {DateTime.Now}... ");
+
+                var status = await GetDeviceStatusAsync();
+
+                if(status == "ON" )
+                {
+                    await DeviceOffAsync();
+                }
+
+
+
+
                 var delaySpan = midnight + AMOnTimeOffest - currentTime;
                 Console.WriteLine($"wait started at : {DateTime.Now.ToShortTimeString()}");
                 Console.WriteLine($"delay span: {delaySpan}");

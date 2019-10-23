@@ -32,19 +32,14 @@ namespace CTS.Oberon
             // See how many Oberon devices we have in the system:
             LoadDevices();
 
-            //Task.Run(() => _oberonDevices[0].StartMonitorRoutine(RefreshSunsetTime,
-            //                                                     new Progress<string>(LogProgress),
-            //                                                     cToken));
-
-            Task.Run(() => _oberonDevices[0].Monitor(new DateTime(2019, 10, 15, 18, 30, 0), cToken), cToken);
-
-            cToken.WaitHandle.WaitOne(15 * 1000);
-
-            
+            Task.Run(() => _oberonDevices[0].StartMonitorRoutine(RefreshSunsetTime,
+                                                                 new Progress<string>(LogProgress),
+                                                                 cToken));
 
 
-            // _oberonDevices[1].IsOffTimeBlock(_sunsetToday);
-            //_oberonDevices[0].GetDeviceStatusAsync().Wait();
+
+            //cToken.WaitHandle.WaitOne(15 * 1000);
+
 
             // Initialize the devices found:
             //InitDevicesAsync(cToken).Wait();
