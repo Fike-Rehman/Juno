@@ -40,80 +40,7 @@ namespace CTS.Oberon
             }
         }
 
-        ///// <summary>
-        /////  Set the Oberon Relay ON or Off based on the device settings and today's Sunset time
-        ///// </summary>
-        ///// <param name="sunsetToday"></param>
-        ///// <param name="progress"></param>
-        ///// <param name="ct"></param>
-        ///// <returns></returns>
-        //public async Task StartMonitorRoutine(DateTime sunsetToday, IProgress<string> progress, CancellationToken ct)
-        //{
-        //    while(!ct.IsCancellationRequested)
-        //    {
-        //        if(IsOffTimeBlock(sunsetToday))
-        //        {
-        //            // get the current device status:
-        //            var dStatus = await GetDeviceStatusAsync();
-
-        //            if(dStatus == "ON")
-        //            {
-        //                // send the request to turn device off
-        //                var response = await DeviceOffAsync();
-
-        //                if(response == "Success")
-        //                {
-        //                    progress?.Report($"Oberon device: {Name}, Location: {Location} turned off at {DateTime.Now}");
-        //                }
-        //                else
-        //                {
-        //                    progress?.Report($"Oberon device with Ip Address {IpAddress} failed to respond to Off request");
-        //                    progress?.Report($"{response}");
-        //                }
-        //            }
-        //            else if(dStatus.StartsWith("UNKNOWN", StringComparison.Ordinal))
-        //            {
-        //                // failed to get the device status, report
-        //                progress?.Report($"Failed to get Oberon device status! Ip: {IpAddress}");
-        //                progress?.Report($"{dStatus}");
-        //            }
-        //            // else device is alreay OFF, do nothing.
-        //        }
-        //        else
-        //        {
-        //            // device must be On
-        //            // get the current device status:
-        //            var dStatus = await GetDeviceStatusAsync();
-
-        //            if(dStatus == "OFF")
-        //            {
-        //                // send the request to turn device On
-        //                var response = await DeviceOnAsync();
-
-        //                if (response == "Success")
-        //                {
-        //                    progress?.Report($"Oberon device: {Name}, Location: {Location} turned On at {DateTime.Now}");
-        //                }
-        //                else
-        //                {
-        //                    progress?.Report($"Oberon device with Ip Address {IpAddress} failed to respond to On request");
-        //                    progress?.Report($"{response}");
-        //                }
-
-        //            }
-        //            else if (dStatus.StartsWith("UNKNOWN", StringComparison.Ordinal))
-        //            {
-        //                // failed to get the device status, report
-        //                progress?.Report($"Failed to get Oberon device status {IpAddress}");
-        //                progress?.Report($"{dStatus}");
-        //            }
-        //            // else device is already On, do nothing.
-        //        }
-
-        //        await Task.Delay(new TimeSpan(0, 0, 0, 30), ct); // check every 30 secs        
-        //    }
-        //}
-
+        
         public async Task StartMonitorRoutine(Func<DateTime> SunsetToday, IProgress<string> progress, CancellationToken ct)
         {
             progress.Report($"Starting Monitor routine for device: {Name}...");
@@ -126,7 +53,6 @@ namespace CTS.Oberon
 
                await Monitor(PMOnTime, progress, ct);
             }
-
         }
 
         private async Task Monitor(DateTime PMOnTime, IProgress<string> progress, CancellationToken ct)
@@ -137,19 +63,15 @@ namespace CTS.Oberon
 
             if (currentTime >= midnight && currentTime < midnight + AMOnTimeOffest)
             {
-                Console.WriteLine("In Block1: turning lights off");
-
                 progress.Report($"Turning {Name} off at {DateTime.Now}... ");
 
-                var status = await GetDeviceStatusAsync();
+                var response = await DeviceOffAsync();
 
-                if(status == "ON" )
+                if("Success" != response)
                 {
-                    await DeviceOffAsync();
+                    progress?.Report($"Error turning device off. Device: {Name}");
+                    progress?.Report(response);
                 }
-
-
-
 
                 var delaySpan = midnight + AMOnTimeOffest - currentTime;
                 Console.WriteLine($"wait started at : {DateTime.Now.ToShortTimeString()}");
