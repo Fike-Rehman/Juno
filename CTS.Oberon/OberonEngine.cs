@@ -16,10 +16,19 @@ namespace CTS.Oberon
 
         private List<OberonDevice> _oberonDevices;
 
+        // last time solar data was updated:
+        private DateTime _lastSolarUpdate;
+
+        // Today's sunset time:
+        private DateTime _sunsetToday;
+
         public OberonEngine(ILogger<OberonEngine> logger)
         {
             _oberonDevices = new List<OberonDevice>();
             _logger = logger;
+
+            _lastSolarUpdate = DateTime.MinValue;
+            _sunsetToday = DateTime.MinValue;
         }
 
         public void Run(CancellationToken cToken)
@@ -28,75 +37,83 @@ namespace CTS.Oberon
 
             _logger.LogInformation("Beginning Oberon Activties...");
 
-           
             // See how many Oberon devices we have in the system:
             LoadDevices();
 
-            Task.Run(() => _oberonDevices[0].StartMonitorRoutine(RefreshSunsetTime,
-                                                                 new Progress<string>(LogProgress),
-                                                                 cToken));
-
-
-
-            //cToken.WaitHandle.WaitOne(15 * 1000);
+            //Task.Run(() => _oberonDevices[0].StartMonitorRoutineAsync(RefreshSunsetTime,
+            //                                                     new Progress<DeviceProgress>(LogProgress),
+            //                                                     cToken));
 
 
             // Initialize the devices found:
-            //InitDevicesAsync(cToken).Wait();
+            // We must wait for this to complete before proceeding
+            InitDevicesAsync(cToken).Wait();
 
-            //// Start the Task to run the Ping routines for each device:
-            //_logger.LogInformation("Device initialization Completed!");
-            //_logger.LogInformation($"{_oberonDevices.Count} active Oberon devices(s) detected during initialization!");
+            _logger.LogInformation("Device initialization Completed!");
+            _logger.LogInformation($"{_oberonDevices.Count} active Oberon devices(s) detected during initialization!");
 
-            //try
-            //{
-            //    var oberonTasks = new List<Task>();
+            try
+            {
+                var oberonTasks = new List<Task>();
 
-            //    // Launch ping routines for all the initialized devices:
-            //    _oberonDevices.ForEach(d =>
-            //    {
-            //        if (cToken.IsCancellationRequested) return;
+                // Launch ping routines for all the initialized devices:
+                _oberonDevices.ForEach(d =>
+                {
+                    if (cToken.IsCancellationRequested) return;
 
-            //        var pt = Task.Run(() => d.StartPingRoutine(new Progress<string>(LogProgress), cToken));
+                    var pt = Task.Run(() => d.StartPingRoutineAsync(new Progress<DeviceProgress>(LogProgress), cToken));
 
-            //        _logger.LogInformation($"Ping routine for Oberon device :{d.Name} started!");
+                    _logger.LogInformation($"Ping routine for Oberon device :{d.Name} started!");
 
-            //        oberonTasks.Add(pt);
-            //    });
+                    oberonTasks.Add(pt);
+                });
 
-            //    Task.Delay(1000, cToken);
+                Thread.Sleep(1000);
 
-            //    // Launch Monitor routines for all the initialized devices:
-            //    _oberonDevices.ForEach(d =>
-            //    {
-            //        if (cToken.IsCancellationRequested) return;
+                // Launch Monitor routines for all the initialized devices:
+                _oberonDevices.ForEach(d =>
+                {
+                    if (cToken.IsCancellationRequested) return;
 
-            //        var mt = Task.Run(() => d.StartMonitorRoutine(RefreshSunsetTime,
-            //                                                      new Progress<string>(LogProgress),
-            //                                                      cToken));
+                    var mt = Task.Run(() => d.StartMonitorRoutineAsync(RefreshSunsetTime,
+                                                                       new Progress<DeviceProgress>(LogProgress),
+                                                                       cToken));
 
-            //        _logger.LogInformation($"Monitor routine for Oberon device :{d.Name} started!");
+                    _logger.LogInformation($"Monitor routine for Oberon device :{d.Name} started!");
 
-            //        oberonTasks.Add(mt);
-            //    });
+                    oberonTasks.Add(mt);
+                });
 
-            //    Task.WaitAll(oberonTasks.ToArray());
-            //}
-            //catch (Exception x)
-            //{
-            //    _logger.LogError("Exception while running Oberon Tasks!");
-            //    _logger.LogError(x.Message);
-            //    _logger.LogError(x.InnerException.Message);
-            //}
+                Task.WaitAll(oberonTasks.ToArray());
+            }
+            catch (Exception x)
+            {
+                _logger.LogError("Exception while running Oberon Tasks!");
+                _logger.LogError(x.Message);
+                _logger.LogError(x.InnerException.Message);
+            }
         }
 
+        /// <summary>
+        /// refreshes solar data if it is older than 24 hrs and returns
+        /// today's sunset time
+        /// </summary>
+        /// <returns></returns>
         public DateTime RefreshSunsetTime()
         {
-            // Get the sunrise/sunset times 
-            SolarTimes.GetSolarTimes(out DateTime _sunriseToday,
-                                     out DateTime _sunsetToday);
+            if(DateTime.Now - _lastSolarUpdate > TimeSpan.FromHours(24))
+            {
+                // Get the sunrise/sunset times 
+                SolarTimes.GetSolarTimes(out DateTime sunriseToday,
+                                         out DateTime sunsetToday);
 
-            _logger.LogInformation($"Today's Sunset time: {_sunsetToday}");
+                _sunsetToday = sunsetToday;
+                _lastSolarUpdate = DateTime.Now;
+
+                _logger.LogInformation($"Solar Data updated at: {_lastSolarUpdate}");
+                _logger.LogInformation($"Today's Sunset time: {_sunsetToday}");
+            }
+
             return _sunsetToday;
         }
 
@@ -104,9 +121,20 @@ namespace CTS.Oberon
         /// logs the messages reported by the devices
         /// </summary>
         /// <param name="progressString"></param>
-        private void LogProgress(string progressString)
+        private void LogProgress(DeviceProgress progressReport)
         {
-            _logger.LogInformation(progressString);
+            if(progressReport.PType == ProgressType.TRACE)
+            {
+                Console.WriteLine(progressReport.PMessage);
+            }
+            else if(progressReport.PType == ProgressType.INFO)
+            {
+                _logger.LogInformation(progressReport.PMessage);
+            }
+            else if(progressReport.PType == ProgressType.ALERT)
+            {
+                _logger.LogError(progressReport.PMessage);
+            }
         }
 
         /// <summary>
@@ -151,11 +179,9 @@ namespace CTS.Oberon
 
                     var device = _oberonDevices[i];
 
-                    _logger.LogDebug($"Pinging device {device.IpAddress}....");
+                    _logger.LogInformation("Beginning device initialization....");
 
-                    var progress = new Progress<string>(msg => _logger.LogDebug(msg));
-
-                    var result = await device.DevicePingAsync(device.IpAddress, progress, ct);
+                    var result = await device.DeviceInitializeAsync(new Progress<DeviceProgress>(LogProgress), ct);
 
                     if (result == PingResult.FAILURE)
                     {

@@ -3,10 +3,9 @@ using CTS.Oberon;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Concurrent;
 
 namespace JunoHost
 {
@@ -36,14 +35,13 @@ namespace JunoHost
                 foreach(var t in _taskEngines)
                 {
                     _logger.LogDebug($"Juno service running at {DateTime.Now}. Status: {t.Id}, {t.Status}");
-                    await Task.Delay(5000, stoppingToken);
+                    await Task.Delay(60 * 1000, stoppingToken);
                 }
             }      
         }
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {
-           
             _logger.LogInformation("Starting Juno Service. Please stand by...");
 
             _robin.SpeakAsync("Starting Juno Service... Please stand by").Wait();

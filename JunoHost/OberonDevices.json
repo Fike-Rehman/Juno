@@ -6,7 +6,7 @@
     "Location": "office",
     "AMOnTimeOffset": "06:30:00",
     "AMOnDuration":  "02:00:00",
-    "OnTimeOffset": "-01:00:00",
+    "OnTimeOffset": "02:00:00",
     "OffTime": "23:20:00"
   },
   {
@@ -14,8 +14,6 @@
     "Name": "Oberon2",
     "IpAddress": "192.168.50.66",
     "Location": "driveway",
-    "AMOnTimeOffset": "0",
-    "AMOnDuration": "02:30:00",
     "OnTimeOffset": "-00:15:00",
     "OffTime": "23:20:00"
   }
