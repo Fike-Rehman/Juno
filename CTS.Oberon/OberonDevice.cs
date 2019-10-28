@@ -132,57 +132,79 @@ namespace CTS.Oberon
         }
 
         private async Task Monitor(DateTime PMOnTime, IProgress<DeviceProgress> progress, CancellationToken ct)
-        {
+            {
             var currentTime = DateTime.Now;
             var midnight = DateTime.Today;
 
-            if (AMOnTimeOffest > TimeSpan.Zero && currentTime < PMOnTime)
+            if (currentTime < PMOnTime)
             {
-                if (currentTime >= midnight && currentTime < midnight + AMOnTimeOffest)
+                if (AMOnTimeOffest > TimeSpan.Zero)
                 {
-                    await SetDeviceOffAsync(progress);
-
-                    // set up the wait for next event:
-                    var delaySpan = midnight + AMOnTimeOffest - currentTime;
-
-                    progress?.Report(new DeviceProgress()
+                    // Morning OnTime is specified for this device:
+                    if (currentTime >= midnight && currentTime < midnight + AMOnTimeOffest)
                     {
-                        PType = ProgressType.TRACE,
-                        PMessage = $"Wait period started @ {DateTime.Now.ToShortTimeString()}; wait period: {delaySpan} "
-                    });
+                        await SetDeviceOffAsync(progress);
 
-                    Task.Delay(delaySpan, ct).Wait();
+                        // set up the wait for next event:
+                        var delaySpan = midnight + AMOnTimeOffest - currentTime;
 
-                    return;
-                }
+                        progress?.Report(new DeviceProgress()
+                        {
+                            PType = ProgressType.TRACE,
+                            PMessage = $"Wait period started @ {DateTime.Now.ToShortTimeString()}; wait period: {delaySpan} "
+                        });
 
-                if (currentTime >= midnight + AMOnTimeOffest && currentTime <= midnight + AMOnTimeOffest + AMOnDuration)
-                {
-                    // turn device ON
-                    await SetDeviceOnAsync(progress);
+                        Task.Delay(delaySpan, ct).Wait();
 
-                    // set up the wait for next event:
-                    var delaySpan = midnight + AMOnTimeOffest + AMOnDuration - currentTime;
+                        return;
+                    }
 
-                    progress?.Report(new DeviceProgress()
+                    if (currentTime >= midnight + AMOnTimeOffest && currentTime <= midnight + AMOnTimeOffest + AMOnDuration)
                     {
-                        PType = ProgressType.TRACE,
-                        PMessage = $"Wait period started @ {DateTime.Now.ToShortTimeString()}; wait period: {delaySpan} "
-                    });
+                        // turn device ON
+                        await SetDeviceOnAsync(progress);
 
-                    Task.Delay(delaySpan, ct).Wait();
+                        // set up the wait for next event:
+                        var delaySpan = midnight + AMOnTimeOffest + AMOnDuration - currentTime;
 
-                    return;
+                        progress?.Report(new DeviceProgress()
+                        {
+                            PType = ProgressType.TRACE,
+                            PMessage = $"Wait period started @ {DateTime.Now.ToShortTimeString()}; wait period: {delaySpan} "
+                        });
+
+                        Task.Delay(delaySpan, ct).Wait();
+
+                        return;
+                    }
+
+                    if (currentTime >= midnight + AMOnTimeOffest + AMOnDuration && currentTime < PMOnTime)
+                    {
+                        // turn device off:
+                        await SetDeviceOffAsync(progress);
+
+                        // set up the wait for next event:
+                        var delaySpan = PMOnTime - currentTime;
+
+                        progress?.Report(new DeviceProgress()
+                        {
+                            PType = ProgressType.TRACE,
+                            PMessage = $"Wait period started @ {DateTime.Now.ToShortTimeString()}; wait period: {delaySpan} "
+                        });
+
+                        Task.Delay(delaySpan, ct).Wait();
+
+                        return;
+                    }
                 }
-
-                if (currentTime >= midnight + AMOnTimeOffest + AMOnDuration && currentTime < PMOnTime)
+                else
                 {
+                    // No AM On time specified. Keep the device off
                     // turn device off:
                     await SetDeviceOffAsync(progress);
 
                     // set up the wait for next event:
                     var delaySpan = PMOnTime - currentTime;
-
                     progress?.Report(new DeviceProgress()
                     {
                         PType = ProgressType.TRACE,
@@ -191,26 +213,8 @@ namespace CTS.Oberon
 
                     Task.Delay(delaySpan, ct).Wait();
 
-                    return;
+                    return; 
                 } 
-            }
-            else
-            {
-                // No AM On time specified. Keep the device off
-                // turn device off:
-                await SetDeviceOffAsync(progress);
-
-                // set up the wait for next event:
-                var delaySpan = PMOnTime - currentTime;
-                progress?.Report(new DeviceProgress()
-                {
-                    PType = ProgressType.TRACE,
-                    PMessage = $"Wait period started @ {DateTime.Now.ToShortTimeString()}; wait period: {delaySpan} "
-                });
-
-                Task.Delay(delaySpan, ct).Wait();
-
-                return;
             }
 
             if (currentTime >= PMOnTime && currentTime < OffTime)
@@ -238,7 +242,7 @@ namespace CTS.Oberon
                 await SetDeviceOffAsync(progress);
 
                 // set up the wait for next event:
-                var delaySpan = DateTime.Today.AddDays(1) - currentTime;
+                var delaySpan = midnight - currentTime + TimeSpan.FromMinutes(5);
 
                 progress?.Report(new DeviceProgress()
                 {

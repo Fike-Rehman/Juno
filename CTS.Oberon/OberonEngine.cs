@@ -126,6 +126,7 @@ namespace CTS.Oberon
             if(progressReport.PType == ProgressType.TRACE)
             {
                 Console.WriteLine(progressReport.PMessage);
+                _logger.LogDebug(progressReport.PMessage);
             }
             else if(progressReport.PType == ProgressType.INFO)
             {
