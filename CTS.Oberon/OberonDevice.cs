@@ -133,7 +133,8 @@ namespace CTS.Oberon
 
         private async Task Monitor(DateTime PMOnTime, IProgress<DeviceProgress> progress, CancellationToken ct)
             {
-            var currentTime = DateTime.Now;
+            //var currentTime = DateTime.Now;
+            var currentTime = new DateTime(2019, 10, 28, 23, 35, 1);
             var midnight = DateTime.Today;
 
             if (currentTime < PMOnTime)
@@ -143,7 +144,7 @@ namespace CTS.Oberon
                     // Morning OnTime is specified for this device:
                     if (currentTime >= midnight && currentTime < midnight + AMOnTimeOffest)
                     {
-                        await SetDeviceOffAsync(progress);
+                       // await SetDeviceOffAsync(progress);
 
                         // set up the wait for next event:
                         var delaySpan = midnight + AMOnTimeOffest - currentTime;
@@ -162,7 +163,7 @@ namespace CTS.Oberon
                     if (currentTime >= midnight + AMOnTimeOffest && currentTime <= midnight + AMOnTimeOffest + AMOnDuration)
                     {
                         // turn device ON
-                        await SetDeviceOnAsync(progress);
+                       // await SetDeviceOnAsync(progress);
 
                         // set up the wait for next event:
                         var delaySpan = midnight + AMOnTimeOffest + AMOnDuration - currentTime;
@@ -181,7 +182,7 @@ namespace CTS.Oberon
                     if (currentTime >= midnight + AMOnTimeOffest + AMOnDuration && currentTime < PMOnTime)
                     {
                         // turn device off:
-                        await SetDeviceOffAsync(progress);
+                       // await SetDeviceOffAsync(progress);
 
                         // set up the wait for next event:
                         var delaySpan = PMOnTime - currentTime;
@@ -201,7 +202,7 @@ namespace CTS.Oberon
                 {
                     // No AM On time specified. Keep the device off
                     // turn device off:
-                    await SetDeviceOffAsync(progress);
+                  //  await SetDeviceOffAsync(progress);
 
                     // set up the wait for next event:
                     var delaySpan = PMOnTime - currentTime;
@@ -220,7 +221,7 @@ namespace CTS.Oberon
             if (currentTime >= PMOnTime && currentTime < OffTime)
             {
                 // Turn device On:
-                await SetDeviceOnAsync(progress);
+               // await SetDeviceOnAsync(progress);
 
                 // set up the wait for next event:
                 var delaySpan = OffTime - currentTime;
@@ -239,10 +240,10 @@ namespace CTS.Oberon
             if (currentTime >= OffTime && currentTime < DateTime.Today.AddDays(1))
             {
                 // turn device off:
-                await SetDeviceOffAsync(progress);
+                // await SetDeviceOffAsync(progress);
 
                 // set up the wait for next event:
-                var delaySpan = midnight - currentTime + TimeSpan.FromMinutes(5);
+                var delaySpan = DateTime.Today.AddDays(1) + TimeSpan.FromMinutes(5) - currentTime;
 
                 progress?.Report(new DeviceProgress()
                 {
