@@ -1,11 +1,21 @@
 ﻿[
   {
+    "Id": "00",
+    "Name": "Oberon0",
+    "IpAddress": "192.000.00.00",
+    "Location": "simulated",
+    "AMOnTimeOffset": "06:30:00",
+    "AMOnDuration": "02:00:00",
+    "OnTimeOffset": "02:00:00",
+    "OffTime": "23:20:00"
+  },
+  {
     "Id": "01",
     "Name": "Oberon1",
     "IpAddress": "192.168.50.65",
     "Location": "office",
     "AMOnTimeOffset": "06:30:00",
-    "AMOnDuration":  "02:00:00",
+    "AMOnDuration": "02:00:00",
     "OnTimeOffset": "02:00:00",
     "OffTime": "23:20:00"
   },

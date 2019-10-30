@@ -6,7 +6,7 @@ namespace CTS.Oberon
     public partial class OberonDevice : IDeviceOps
     {
         [JsonProperty(PropertyName = "Id", Required = Required.Always)]
-        public int Id { get; set; }
+        public string Id { get; set; }
 
         [JsonProperty(PropertyName = "Name", Required = Required.Always)]
         public string Name { get; set; }

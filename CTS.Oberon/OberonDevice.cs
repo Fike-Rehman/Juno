@@ -25,9 +25,9 @@ namespace CTS.Oberon
                     PType = ProgressType.TRACE, 
                     PMessage = $"Sending ping request to device:{IpAddress}; Attempt # {n}"
                 });
-                
-
-                var pingresponse = await PingAsync();
+               
+                var pingresponse = (Id != "00") ? await PingAsync()
+                                                : await SimPingAsync();
 
                 if (pingresponse == "Success")
                 {
@@ -80,7 +80,10 @@ namespace CTS.Oberon
 
                 if(!ct.IsCancellationRequested)
                 {
-                    var response = await PingAsync();
+                   // if this is a simulated device, send a simulated Ping, otherwise send a real ping
+
+                   var response = Id != "00" ? await PingAsync() 
+                                             : await SimPingAsync();
 
                     if (response == "Success")
                     {
@@ -132,9 +135,10 @@ namespace CTS.Oberon
         }
 
         private async Task Monitor(DateTime PMOnTime, IProgress<DeviceProgress> progress, CancellationToken ct)
-            {
-            //var currentTime = DateTime.Now;
-            var currentTime = new DateTime(2019, 10, 28, 23, 35, 1);
+        {
+
+            var currentTime = DateTime.Now;
+            // var currentTime = new DateTime(2019, 10, 28, 23, 35, 1);
             var midnight = DateTime.Today;
 
             if (currentTime < PMOnTime)
@@ -144,7 +148,7 @@ namespace CTS.Oberon
                     // Morning OnTime is specified for this device:
                     if (currentTime >= midnight && currentTime < midnight + AMOnTimeOffest)
                     {
-                       // await SetDeviceOffAsync(progress);
+                        await SetDeviceOffAsync(progress);
 
                         // set up the wait for next event:
                         var delaySpan = midnight + AMOnTimeOffest - currentTime;
@@ -163,7 +167,7 @@ namespace CTS.Oberon
                     if (currentTime >= midnight + AMOnTimeOffest && currentTime <= midnight + AMOnTimeOffest + AMOnDuration)
                     {
                         // turn device ON
-                       // await SetDeviceOnAsync(progress);
+                        await SetDeviceOnAsync(progress);
 
                         // set up the wait for next event:
                         var delaySpan = midnight + AMOnTimeOffest + AMOnDuration - currentTime;
@@ -182,7 +186,7 @@ namespace CTS.Oberon
                     if (currentTime >= midnight + AMOnTimeOffest + AMOnDuration && currentTime < PMOnTime)
                     {
                         // turn device off:
-                       // await SetDeviceOffAsync(progress);
+                        await SetDeviceOffAsync(progress);
 
                         // set up the wait for next event:
                         var delaySpan = PMOnTime - currentTime;
@@ -202,7 +206,7 @@ namespace CTS.Oberon
                 {
                     // No AM On time specified. Keep the device off
                     // turn device off:
-                  //  await SetDeviceOffAsync(progress);
+                    await SetDeviceOffAsync(progress);
 
                     // set up the wait for next event:
                     var delaySpan = PMOnTime - currentTime;
@@ -221,7 +225,7 @@ namespace CTS.Oberon
             if (currentTime >= PMOnTime && currentTime < OffTime)
             {
                 // Turn device On:
-               // await SetDeviceOnAsync(progress);
+                await SetDeviceOnAsync(progress);
 
                 // set up the wait for next event:
                 var delaySpan = OffTime - currentTime;
@@ -240,7 +244,7 @@ namespace CTS.Oberon
             if (currentTime >= OffTime && currentTime < DateTime.Today.AddDays(1))
             {
                 // turn device off:
-                // await SetDeviceOffAsync(progress);
+                await SetDeviceOffAsync(progress);
 
                 // set up the wait for next event:
                 var delaySpan = DateTime.Today.AddDays(1) + TimeSpan.FromMinutes(5) - currentTime;
@@ -257,7 +261,7 @@ namespace CTS.Oberon
             }
         }
 
-        #region Helper Methods
+        
         public async Task<string> GetDeviceStatusAsync()
         {
             var dStatus = "UNKNOWN";
@@ -298,6 +302,8 @@ namespace CTS.Oberon
             }
         }
 
+        #region Helper Methods
+
         /// <summary>
         /// Sets the Device to On state and reports the progress
         /// </summary>
@@ -312,7 +318,8 @@ namespace CTS.Oberon
                 PMessage = $"Turning {Name} on at {DateTime.Now}... "
             });
 
-            var response = await DeviceOnAsync();
+            var response = (Id != "00") ? await DeviceOnAsync()
+                                        : await SimDeviceOnAsync();
 
             if ("Success" != response)
             {
@@ -339,8 +346,9 @@ namespace CTS.Oberon
                 PMessage = $"Turning {Name} off at {DateTime.Now}... "
             });
 
-            var response = await DeviceOffAsync();
-
+            var response = (Id != "00") ? await DeviceOffAsync()
+                                        : await SimDeviceOffAsync();
+            
             if ("Success" != response)
             {
                 progress?.Report(new DeviceProgress
@@ -450,68 +458,45 @@ namespace CTS.Oberon
 
                 return onResponse;
             }
-        } 
+        }
         #endregion
 
 
-        ///// <summary>
-        ///// This method tells us if it is time to turn keep the Oberon device off.
-        ///// (By default, Oberon is ON state). It matches the current time with the 
-        ///// following time blocks and tells us if the Oberon should be off
-        ///// Block 1 midnight to morning On Time (Oberon OFF)
-        ///// Block 2 Morning On Time to Morning Off time (Oberon ON)
-        ///// Block 3 Morning Off time to evening On Time (Oberon OFF)
-        ///// Block 4 Evening On time to night Off Time (Oberon ON)
-        ///// Block 5 Night Off time to midnight (Oberon OFF)
-        ///// </summary>
-        ///// <param name="sunsetToday"></param>
-        //private bool IsOffTimeBlock(DateTime sunsetToday)
-        //{   
-        //    //var currentTime = new DateTime(2019, 10, 1, 19, 50, 0);
-        //    var currentTime = DateTime.Now;
+        #region Oberon Simulated API Calls!
 
-        //    var midnight = DateTime.Today;
-        //    var PMOnTime = sunsetToday + OnTimeOffset;
+        private async Task<string> SimPingAsync()
+        {
+            var pingResponse = "";
 
-        //    Console.WriteLine($"Current Time: {currentTime.ToShortTimeString()}");
+            // send a simulated Ping
+            await Task.Delay(3000);
 
-        //    if (AMOnTimeOffest > TimeSpan.Zero) // AM OnTime is specified.
-        //    {
-        //        if (currentTime >= midnight && currentTime <= midnight + AMOnTimeOffest)
-        //        {
-        //            Console.WriteLine("We are in block1 - lights off");
-        //            return true;
-        //        }
-        //        else if (currentTime >= midnight + AMOnTimeOffest && currentTime <= midnight + AMOnTimeOffest + AMOnDuration)
-        //        {
-        //            Console.WriteLine("We are in Block2 - lights on");
-        //            return false;
-        //        }
-        //        else if (currentTime >= midnight + AMOnTimeOffest + AMOnDuration && currentTime <= PMOnTime)
-        //        {
-        //            Console.WriteLine("We are in Block3 - lights off");
-        //            return true;
-        //        } 
-        //    }
-        //    else
-        //    {
-        //        // No morning OnTime specified. Keep light off
-        //        Console.WriteLine("No morning OnTime block found!");
-        //    }
+            pingResponse = "Success";
 
-        //    // Evening On Times:
-        //    if (currentTime >= PMOnTime && currentTime <= OffTime)
-        //    {
-        //        Console.WriteLine("We are in Block4 - lights On");
-        //        return false;
-        //    }
-        //    else if (currentTime >= OffTime && currentTime <= midnight.AddDays(1))
-        //    {
-        //        Console.WriteLine("We are in Block5 - lights off");
-        //        return true;
-        //    }
+            return pingResponse;  
+        }
 
-        //    return true;
-        //}
+        private async Task<string> SimDeviceOffAsync()
+        {
+            var offResponse = "Success";
+
+            // send a simulated Device off request
+            await Task.Delay(3000);
+
+            return offResponse;
+        }
+
+        private async Task<string> SimDeviceOnAsync()
+        {
+            var onResponse = "Success";
+
+            // send a simulated Device off request
+            await Task.Delay(3000);
+
+            return onResponse; 
+        }
+
+        #endregion
+
     }
 }
