@@ -40,9 +40,9 @@ namespace CTS.Oberon
             // See how many Oberon devices we have in the system:
             LoadDevices();
 
-            Task.Run(() => _oberonDevices[0].StartMonitorRoutineAsync(RefreshSunsetTime,
-                                                                 new Progress<DeviceProgress>(LogProgress),
-                                                                 cToken));
+            //Task.Run(() => _oberonDevices[0].StartMonitorRoutineAsync(RefreshSunsetTime,
+            //                                                     new Progress<DeviceProgress>(LogProgress),
+            //                                                     cToken));
 
 
             // Initialize the devices found:
@@ -79,7 +79,7 @@ namespace CTS.Oberon
                                                                        new Progress<DeviceProgress>(LogProgress),
                                                                        cToken));
 
-                    _logger.LogInformation($"Monitor routine for Oberon device :{d.Name} started!");
+                    //_logger.LogInformation($"Monitor routine for Oberon device :{d.Name} started!");
 
                     oberonTasks.Add(mt);
                 });
@@ -101,7 +101,7 @@ namespace CTS.Oberon
         /// <returns></returns>
         public DateTime RefreshSunsetTime()
         {
-            if(DateTime.Now - _lastSolarUpdate > TimeSpan.FromHours(24))
+            if(_lastSolarUpdate.Date != DateTime.Now.Date)
             {
                 // Get the sunrise/sunset times 
                 SolarTimes.GetSolarTimes(out DateTime sunriseToday,
@@ -125,7 +125,7 @@ namespace CTS.Oberon
         {
             if(progressReport.PType == ProgressType.TRACE)
             {
-                Console.WriteLine(progressReport.PMessage);
+               // Console.WriteLine(progressReport.PMessage);
                 _logger.LogDebug(progressReport.PMessage);
             }
             else if(progressReport.PType == ProgressType.INFO)
@@ -145,15 +145,13 @@ namespace CTS.Oberon
         {
             try
             {
-               // string path = Directory.GetCurrentDirectory();
-
                 using (StreamReader file = File.OpenText("OberonDevices.json"))
                 {
                     // var serialize = new JsonSerializer();
                     string jsonString = file.ReadToEnd();
                     _oberonDevices = JsonConvert.DeserializeObject<List<OberonDevice>>(jsonString);
 
-                    _logger.LogInformation($"Found {_oberonDevices.Count} Oberon devices defined in the system!");
+                    _logger.LogDebug($"Found {_oberonDevices.Count} Oberon device(s) defined in the system!");
                 }
             }
             catch (Exception x)
@@ -196,7 +194,7 @@ namespace CTS.Oberon
                     }
                     else
                     {
-                        _logger.LogWarning($"Device Ping Successful! Ip Address:{device.IpAddress}");
+                        _logger.LogDebug($"Device Ping Successful! Ip Address:{device.IpAddress}");
                     }
                 }
             }

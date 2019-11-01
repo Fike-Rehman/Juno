@@ -81,7 +81,6 @@ namespace CTS.Oberon
                 if(!ct.IsCancellationRequested)
                 {
                    // if this is a simulated device, send a simulated Ping, otherwise send a real ping
-
                    var response = Id != "00" ? await PingAsync() 
                                              : await SimPingAsync();
 
@@ -129,6 +128,7 @@ namespace CTS.Oberon
             {
                 var sunset = SunsetToday();
                 var PMOnTime = sunset - OnTimeOffset;
+                
 
                await Monitor(PMOnTime, progress, ct);
             }
@@ -136,10 +136,10 @@ namespace CTS.Oberon
 
         private async Task Monitor(DateTime PMOnTime, IProgress<DeviceProgress> progress, CancellationToken ct)
         {
-
-            var currentTime = DateTime.Now;
-            // var currentTime = new DateTime(2019, 10, 28, 23, 35, 1);
+            var currentTime = DateTime.Now; // + new TimeSpan(10, 0, 0);
+            //var currentTime = new DateTime(2019, 10, 31, 23, 35, 1);
             var midnight = DateTime.Today;
+            var offTime = DateTime.Today + OffTime.TimeOfDay;
 
             if (currentTime < PMOnTime)
             {
@@ -222,13 +222,13 @@ namespace CTS.Oberon
                 } 
             }
 
-            if (currentTime >= PMOnTime && currentTime < OffTime)
+            if (currentTime >= PMOnTime && currentTime < offTime)
             {
                 // Turn device On:
                 await SetDeviceOnAsync(progress);
 
                 // set up the wait for next event:
-                var delaySpan = OffTime - currentTime;
+                var delaySpan = offTime - currentTime;
 
                 progress?.Report(new DeviceProgress()
                 {
@@ -241,7 +241,7 @@ namespace CTS.Oberon
                 return;
             }
 
-            if (currentTime >= OffTime && currentTime < DateTime.Today.AddDays(1))
+            if (currentTime >= offTime && currentTime < DateTime.Today.AddDays(1))
             {
                 // turn device off:
                 await SetDeviceOffAsync(progress);
