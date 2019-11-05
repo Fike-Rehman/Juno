@@ -16,6 +16,9 @@ namespace CTS.Oberon
 
         private List<OberonDevice> _oberonDevices;
 
+        // TODO: Make this configurable
+        private string deviceFileLocation = "C:\\Program Files\\CTS\\Juno\\OberonDevices.Json";
+
         // last time solar data was updated:
         private DateTime _lastSolarUpdate;
 
@@ -145,7 +148,7 @@ namespace CTS.Oberon
         {
             try
             {
-                using (StreamReader file = File.OpenText("OberonDevices.json"))
+                using (StreamReader file = File.OpenText(deviceFileLocation))
                 {
                     // var serialize = new JsonSerializer();
                     string jsonString = file.ReadToEnd();
