@@ -1,5 +1,7 @@
 ﻿using CTS.Common.Utilities;
+using CTS.Callisto;
 using CTS.Oberon;
+using CTS.Juno.Common;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -9,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace JunoHost
 {
-    public class Worker : BackgroundService, IDisposable
+    public class Worker : BackgroundService
     {
         private readonly ILogger<Worker> _logger;
 
@@ -17,15 +19,21 @@ namespace JunoHost
 
         private readonly IDeviceEngine _oberonEngine;
 
+        private readonly IDeviceEngine _callistoEngine;
+
         private readonly ConcurrentBag<Task> _taskEngines = new ConcurrentBag<Task>();
 
-        public Worker(ILogger<Worker> logger, IDeviceEngine engine)
+        public Worker(ILogger<Worker> logger, 
+                      OberonEngine oberonEngine, 
+                      CallistoEngine callistoEngine)
         {
             _logger = logger;
 
             _robin = new Robin();
 
-            _oberonEngine = engine;    
+            _oberonEngine = oberonEngine;
+
+            _callistoEngine = callistoEngine;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -54,6 +62,13 @@ namespace JunoHost
             _logger.LogInformation($"Oberon engine was started at {DateTimeOffset.Now}");
 
             cancellationToken.WaitHandle.WaitOne(500);
+
+           // Start the Callisto Engine
+            var callistoTask = Task.Run(() => _callistoEngine.Run(cancellationToken));
+
+            _taskEngines.Add(callistoTask);
+
+            _logger.LogInformation($"Callisto engine was started at {DateTimeOffset.Now}");
 
             return base.StartAsync(cancellationToken);
         }

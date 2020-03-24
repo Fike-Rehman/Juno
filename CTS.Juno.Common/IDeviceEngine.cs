@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace CTS.Oberon
+namespace CTS.Juno.Common
 {
     public interface IDeviceEngine
     {

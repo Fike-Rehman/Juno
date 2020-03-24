@@ -1,12 +1,13 @@
-﻿using System;
+﻿using CTS.Callisto;
+using CTS.Oberon;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using CTS.Oberon;
+using System;
 
 namespace JunoHost
 {
-    public class Program
+    public static class Program
     {
         static void Main(string[] args)
         {
@@ -31,7 +32,8 @@ namespace JunoHost
                             .ConfigureServices((hostContext, services) =>
                             {
                                 services.AddHostedService<Worker>()
-                                        .AddSingleton(typeof(IDeviceEngine), typeof(OberonEngine));
+                                        .AddSingleton(typeof(OberonEngine))
+                                        .AddSingleton(typeof(CallistoEngine));
                             });
     }
 }
