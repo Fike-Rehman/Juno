@@ -1,0 +1,79 @@
+{
+  "ZohalHubUri": "Zohal.azure-devices.net",
+
+  //"JunoDevice": {
+  //      "Id": "10",
+  //      "Name": "Callisto00",
+  //      "IpAddress": "192.000.00.00",
+  //      "Location": "Simulated"
+  //     // "Settings": []
+  //    }
+  "Devicelist": 
+  {
+    "JunoDevices": [
+      {
+        "Id": "10",
+        "Name": "Callisto00",
+        "IpAddress": "192.000.00.00",
+        "Location": "Simulated",
+        "Settings": []
+      },
+      {
+        "Id": "11",
+        "Name": "Callisto01",
+        "IpAddress": "192.168.50.137",
+        "Location": "Crawl Space",
+        "Settings": []
+      },
+      {
+        "Id": "12",
+        "Name": "Callisto02",
+        "IpAddress": "192.168.50.36",
+        "Location": "Attic",
+        "Settings": []
+      },
+      {
+        "Id": "13",
+        "Name": "Oberon00",
+        "IpAddress": "192.000.00.00",
+        "Location": "Simulated",
+        "Settings": [
+         {
+
+           "AMOnTimeOffset": "06:30:00",
+           "AMOnDuration": "02:15:00",
+           "OnTimeOffset": "02:30:00",
+           "OffTime": "23:25:00"
+         }
+        ]
+      },
+      {
+        "Id": "14",
+        "Name": "Oberon01",
+        "IpAddress": "192.168.50.65",
+        "Location": "Office",
+        "Settings": [
+         {
+        
+           "AMOnTimeOffset": "06:30:00",
+           "AMOnDuration": "02:00:00",
+           "OnTimeOffset": "02:00:00",
+           "OffTime": "23:20:00"
+         }
+        ]
+      },
+      {
+        "Id": "15",
+        "Name": "Oberon01",
+        "IpAddress": "192.168.50.2",
+        "Location": "Driveway",
+        "Settings": [
+         {
+           "OnTimeOffset": "-00:15:00",
+           "OffTime": "23:15:00"
+         }
+        ]
+      }
+    ]
+  }
+}

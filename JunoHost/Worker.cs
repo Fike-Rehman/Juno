@@ -63,6 +63,8 @@ namespace JunoHost
 
             cancellationToken.WaitHandle.WaitOne(500);
 
+           
+
            // Start the Callisto Engine
             var callistoTask = Task.Run(() => _callistoEngine.Run(cancellationToken));
 
