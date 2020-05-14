@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace CTS.Juno.Common
+namespace CTS.Callisto
 {
-    public class CallistoDevice 
+    public partial class CallistoDevice 
     {
         public string Id { get; set; }
 

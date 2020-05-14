@@ -2,6 +2,9 @@
 
 namespace CTS.Juno.Common
 {
+    /// <summary>
+    /// config interface to read device settings from the appsettings.json file
+    /// </summary>
     public interface IJunoDevice
     {
         string Id { get; set; }
@@ -16,6 +19,5 @@ namespace CTS.Juno.Common
         
         string Location { get; set; }
 
-     //   string DeviceKey { get; set; }
     }
 }

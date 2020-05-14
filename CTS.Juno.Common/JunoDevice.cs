@@ -3,6 +3,9 @@ using System;
 
 namespace CTS.Juno.Common
 {
+    /// <summary>
+    /// config class used to read in the device configurations from the appsetings.json file
+    /// </summary>
     public class JunoDevice : IJunoDevice
     {
         [JsonProperty(PropertyName = "Id", Required = Required.Always)]
@@ -25,8 +28,6 @@ namespace CTS.Juno.Common
 
         [JsonProperty(PropertyName = "Settings", Required = Required.AllowNull)]
         public DeviceSettings[] Settings { get; set; }
-
-     //   public string DeviceKey { get; set; } = null;
     }
 
 
