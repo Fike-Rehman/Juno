@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CTS.Juno.Common
+﻿namespace CTS.Juno.Common
 {
     public interface IAppSettings
     {
-        string ZohalHubUri { get; }
+        string ZohalHubUri { get; set; }
 
-        Devicelist Devicelist { get; }
+        bool IsMetric { get; set; }
+
+        Devicelist Devicelist { get; set; }
     }
 }

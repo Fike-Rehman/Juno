@@ -1,4 +1,4 @@
-﻿
+﻿using System;
 
 namespace CTS.Juno.Common
 {
@@ -27,6 +27,8 @@ namespace CTS.Juno.Common
     public struct DeviceProgress
     {
         public ProgressType PType { get; set; }
+
+       // public DateTime PReportTime { get; set; }
 
         public string PMessage { get; set; }
     }

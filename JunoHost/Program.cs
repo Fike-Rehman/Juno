@@ -28,10 +28,14 @@ namespace JunoHost
         private static IHostBuilder CreateHostBuilder(string[] args) =>
                         Host.CreateDefaultBuilder(args)
                             .UseWindowsService()
-                            .ConfigureLogging((context, logger) =>
+                            .ConfigureLogging((logBuilder) =>
                             {
-                                logger.AddLog4Net().SetMinimumLevel(LogLevel.Debug);
-                            })
+                                logBuilder.ClearProviders();
+                                logBuilder.SetMinimumLevel(LogLevel.Debug);
+                                logBuilder.AddLog4Net("log4net.config");
+
+                               // logger.AddLog4Net("log4net.config").SetMinimumLevel(LogLevel.Debug);
+                            }).UseConsoleLifetime()
                             .ConfigureAppConfiguration((context, confiApp) =>
                             {
                                 var env = Environment.GetEnvironmentVariable("NETCORE_ENVIRONMENT");

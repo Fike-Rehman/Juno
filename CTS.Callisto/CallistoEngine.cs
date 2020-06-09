@@ -4,20 +4,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace CTS.Callisto
 {
-
-    //public class SimulatedCallistoDevice
-    //{
-    //    public int TempF { get; set; }
-
-    //    public int Humidity { get; set; }
-    //}
-
-
     public class CallistoEngine : IDeviceEngine
     {
         private readonly ILogger<CallistoEngine> _logger;
@@ -26,7 +18,7 @@ namespace CTS.Callisto
 
         private readonly ISecureSettings _secureSettings;
 
-        private string ZohalHubUri;
+       // private string ZohalHubUri;
 
         private List<CallistoDevice> _callistos = null;
 
@@ -49,7 +41,7 @@ namespace CTS.Callisto
         
         public void Run(CancellationToken cToken)
         {
-            _logger.LogInformation("Begining Callisto Activities...");
+            _logger.LogInformation("Beginning Callisto Activities...");
 
             // read callisto devices configuration and build the device list
 
@@ -57,7 +49,7 @@ namespace CTS.Callisto
             {
                 if (device.Id.StartsWith("Callisto"))
                 {
-                    _callistos.Add(new CallistoDevice
+                    var settings = new CallistoSettings()
                     {
                         Id = device.Id,
                         Name = device.Name,
@@ -65,8 +57,17 @@ namespace CTS.Callisto
                         ProvisionDate = device.ProvisionDate,
                         IpAddress = device.IpAddress,
                         Location = device.Location,
-                        DeviceKey = _secureSettings.GetDeviceKey(device.Id),
-                    });
+                        DeviceKey = _secureSettings.GetDeviceKey(device.Id)
+                    };
+
+                    if(_appSettings.IsMetric)
+                    {
+                        _callistos.Add(new CallistoDevice(settings, true));
+                    }
+                    else
+                    {
+                        _callistos.Add(new CallistoDevice(settings));
+                    }
                 }  
             }
 
@@ -82,12 +83,12 @@ namespace CTS.Callisto
                 // print a list of online devices:
                 _logger.LogInformation($"Found {_callistos.Count} callistos devices online:");
 
-                _logger.LogInformation($"Device ID\tLocation\tIp Address");
+                //_logger.LogInformation($"Device ID\tLocation\tIp Address");
 
-                _callistos.ForEach(d =>
-                {
-                    _logger.LogInformation($"{d.Id}\t{d.Location}\t{d.IpAddress}");
-                });
+                //_callistos.ForEach(d =>
+                //{
+                //    _logger.LogInformation($"{d.Id}\t{d.Location}\t{d.IpAddress}");
+                //});
 
                 try
                 {
@@ -100,23 +101,25 @@ namespace CTS.Callisto
 
                         var pt = Task.Run(() => callisto.StartPingRoutineAsync(new Progress<DeviceProgress>(LogProgress), cToken));
 
-                        _logger.LogInformation($"Ping routine for Callisto device :{callisto.Id} started!");
+                        _logger.LogInformation($"Ping routine for Callisto device: {callisto.Id} started!");
 
                         callistoTasks.Add(pt);
-                    });
 
-                    cToken.WaitHandle.WaitOne(1000);
+                        Task.Delay(2000, cToken).Wait();
+                    });
 
                     // Launch Monitor Routines for all initialized devices:
                     _callistos.ForEach(callisto =>
                     {
                         if (cToken.IsCancellationRequested) return;
 
-                        var mt = Task.Run(() => callisto.StartMonitorRoutineAsync(new Progress<DeviceProgress>(LogProgress), cToken));
-
-                        _logger.LogInformation($"Monitor routine for Callisto device :{callisto.Id} started!");
+                        var mt = Task.Run(() => callisto.StartMonitorRoutineAsync(ProcessMeasurements, 
+                                                                                  new Progress<DeviceProgress>(LogProgress), 
+                                                                                  cToken));
 
                         callistoTasks.Add(mt);
+
+                        Task.Delay(2000, cToken).Wait(); // stagger the device monitoring so the logs are less jumbled
                     });
                 }
                 catch(Exception x)
@@ -126,6 +129,7 @@ namespace CTS.Callisto
                     _logger.LogError(x.InnerException.Message);
                 }
             }
+
             //deviceClient = DeviceClient.Create(ZohalHubUri, 
             //                                   new DeviceAuthenticationWithRegistrySymmetricKey("Callisto00", deviceKey));
             
@@ -135,7 +139,7 @@ namespace CTS.Callisto
         /// <summary>
         /// initializes the devices that are defined in the configuration
         /// by sending a ping message to each of those devices. If the ping
-        /// to a devics fails after repeated attempts, that device is removed
+        /// to a device fails after repeated attempts, that device is removed
         /// from the list (assuming that we have configured a bad device or the 
         /// configuration is wrong) 
         /// </summary>
@@ -157,7 +161,7 @@ namespace CTS.Callisto
 
                     if (result == PingResult.FAILURE)
                     {
-                        _logger.LogWarning($"Removing device with IP Address:{device.IpAddress} from device list because it doesn't appear to be online");
+                        _logger.LogWarning($"Removing device with device Id: {device.Id} from device list because it doesn't appear to be online");
 
                         _callistos.Remove(device);
                     }
@@ -167,7 +171,7 @@ namespace CTS.Callisto
                     }
                     else
                     {
-                        _logger.LogDebug($"Device Ping Successful! Ip Address:{device.IpAddress}");
+                        _logger.LogDebug($"Device Ping Successful! Device Id: {device.Id}");
                     }
                 }
             }
@@ -176,7 +180,7 @@ namespace CTS.Callisto
         /// <summary>
         /// logs the messages reported by the devices
         /// </summary>
-        /// <param name="progressString"></param>
+        /// <param name="progressReport"></param>
         private void LogProgress(DeviceProgress progressReport)
         {
             if (progressReport.PType == ProgressType.TRACE)
@@ -191,6 +195,29 @@ namespace CTS.Callisto
             else if (progressReport.PType == ProgressType.ALERT)
             {
                 _logger.LogError(progressReport.PMessage);
+            }
+        }
+
+        private void ProcessMeasurements(CallistoMeasurements measurements)
+        {
+            if(measurements != null)
+            {
+                // get the device info sending these measurements:
+                if (_callistos != null)
+                {
+                    var location = _callistos.Find(d => d.Id == measurements.ReportingDeviceId).Location;
+                    var reportTime = $"{measurements.MeasurementTime.ToShortDateString()}, {measurements.MeasurementTime.ToLongTimeString()}";
+                    var tUnit = _appSettings.IsMetric ? "°C" : $"°F";
+
+                    var report = new StringBuilder($"{Environment.NewLine}Reported conditions in {location} on {reportTime}: {Environment.NewLine}");
+
+                    report.Append($"\tTemperature: {measurements.Temperature}{tUnit}{Environment.NewLine}");
+                    report.Append($"\tHeat Index: {measurements.HeatIndex}{tUnit}{Environment.NewLine}");
+                    report.Append($"\tHumidity: {measurements.Humidity} %{Environment.NewLine}");
+                    report.Append($"\tDew Point: {measurements.DewPoint}{tUnit}{Environment.NewLine}");
+                    
+                    _logger.LogInformation(report.ToString());  
+                }
             }
         }
 
