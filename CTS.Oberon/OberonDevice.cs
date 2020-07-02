@@ -9,6 +9,18 @@ namespace CTS.Oberon
 {
     public partial class OberonDevice : IDeviceOps
     {
+        public string Id { get; private set; }
+
+        private readonly OberonSettings _settings;
+
+        public OberonDevice(OberonSettings settings)
+        {
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+
+            Id = _settings.Id;
+
+
+        }
         public async Task<PingResult> DeviceInitializeAsync(IProgress<DeviceProgress> progress, CancellationToken ct)
         {
             var result = PingResult.OK;
@@ -24,18 +36,18 @@ namespace CTS.Oberon
                 progress?.Report(new DeviceProgress() 
                 { 
                     PType = ProgressType.TRACE, 
-                    PMessage = $"Sending ping request to device:{IpAddress}; Attempt # {n}"
+                    PMessage = $"Sending ping request to device:{_settings.IpAddress}; Attempt # {n}"
                 });
                
-                var pingresponse = (Id != "00") ? await PingAsync()
-                                                : await SimPingAsync();
+                var pingresponse = _settings.Id.EndsWith("00") ? await SimPingAsync()
+                                                : await PingAsync();
 
                 if (pingresponse == "Success")
                 {
                     progress?.Report(new DeviceProgress()
                     {
                         PType = ProgressType.INFO,
-                        PMessage = $"Ping Acknowledged!. Device Ip: {IpAddress}"
+                        PMessage = $"Ping Acknowledged!. Device Ip: {_settings.IpAddress}"
                     });
                         
                         
@@ -52,7 +64,7 @@ namespace CTS.Oberon
                     progress?.Report(new DeviceProgress()
                     {
                         PType = ProgressType.ALERT,
-                        PMessage = $"Device with Ip Address: {IpAddress} has failed to respond to repeated Ping requests. " +
+                        PMessage = $"Device with Ip Address: {_settings.IpAddress} has failed to respond to repeated Ping requests. " +
                                    $"Please check this device and make sure that it is still Online"
 
                     });
@@ -82,15 +94,15 @@ namespace CTS.Oberon
                 if(!ct.IsCancellationRequested)
                 {
                    // if this is a simulated device, send a simulated Ping, otherwise send a real ping
-                   var response = Id != "00" ? await PingAsync() 
-                                             : await SimPingAsync();
+                   var response = _settings.Id.EndsWith("00") ? await SimPingAsync() 
+                                             : await PingAsync();
 
                     if (response == "Success")
                     {
                         progress?.Report(new DeviceProgress()
                         {
                             PType = ProgressType.INFO,
-                            PMessage = $"Ping Acknowleged by Oberon device: {Name}, Location {Location}"
+                            PMessage = $"Ping Acknowledged by Oberon device: {_settings.Id}, Location {_settings.Location}"
                         });
                     }
                     else
@@ -99,7 +111,7 @@ namespace CTS.Oberon
                         progress?.Report(new DeviceProgress()
                         {
                             PType = ProgressType.ALERT,
-                            PMessage = $"Oberon device with Ip Address {IpAddress} is not responding to the Pings!" +
+                            PMessage = $"Oberon device with Ip Address {_settings.IpAddress} is not responding to the Pings!" +
                                        $"Please make sure this device is still on line"
 
                         });
@@ -121,25 +133,42 @@ namespace CTS.Oberon
             progress.Report(new DeviceProgress()
             {
                 PType = ProgressType.INFO,
-                PMessage = $"Starting Monitor routine for device: {Name}..."
+                PMessage = $"Starting Monitor routine for device: {_settings.Id}..."
 
             });
-                
+
             while (!ct.IsCancellationRequested)
             {
                 var sunset = SunsetToday();
+                var OnTimeOffset = TimeSpan.Parse(_settings.TimeSettings[0].OnTimeOffset);
                 var PMOnTime = sunset - OnTimeOffset;
-                
 
-               await Monitor(PMOnTime, progress, ct);
+
+                await Monitor(PMOnTime, progress, ct);
             }
         }
 
         private async Task Monitor(DateTime PMOnTime, IProgress<DeviceProgress> progress, CancellationToken ct)
         {
             var currentTime = DateTime.Now; // + new TimeSpan(10, 0, 0);
-            //var currentTime = new DateTime(2019, 10, 31, 23, 35, 1);
+           // var currentTime = new DateTime(2020, 6, 11, 21, 12, 1);
+            
             var midnight = DateTime.Today;
+             
+            var AMOnTimeOffest = TimeSpan.Zero;
+            var AMOnDuration = TimeSpan.Zero;
+
+            if (_settings.TimeSettings[0].AMOnTimeOffset != null)
+            {
+                AMOnTimeOffest = TimeSpan.Parse(_settings.TimeSettings[0].AMOnTimeOffset);
+            }
+
+            if(_settings.TimeSettings[0].AMOnDuration != null)
+            {
+                AMOnDuration = TimeSpan.Parse(_settings.TimeSettings[0].AMOnDuration);
+            }
+
+            var OffTime = DateTime.Parse(_settings.TimeSettings[0].OffTime);
             var offTime = DateTime.Today + OffTime.TimeOfDay;
 
             if (currentTime < PMOnTime)
@@ -219,8 +248,8 @@ namespace CTS.Oberon
 
                     Task.Delay(delaySpan, ct).Wait();
 
-                    return; 
-                } 
+                    return;
+                }
             }
 
             if (currentTime >= PMOnTime && currentTime < offTime)
@@ -262,14 +291,14 @@ namespace CTS.Oberon
             }
         }
 
-        
+
         public async Task<string> GetDeviceStatusAsync()
         {
             var dStatus = "UNKNOWN";
 
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri($"http://{IpAddress}");
+                client.BaseAddress = new Uri($"http://{_settings.IpAddress}");
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
                 client.Timeout = TimeSpan.FromMilliseconds(10000);
@@ -316,25 +345,25 @@ namespace CTS.Oberon
             progress?.Report(new DeviceProgress()
             {
                 PType = ProgressType.INFO,
-                PMessage = $"Turning {Name} on at {DateTime.Now}... "
+                PMessage = $"Turning {_settings.Id} on at {DateTime.Now}... "
             });
 
-            var response = (Id != "00") ? await DeviceOnAsync()
-                                        : await SimDeviceOnAsync();
+            var response = _settings.Id.EndsWith("00") ? await SimDeviceOnAsync()
+                                                       : await DeviceOnAsync();
 
             if ("Success" != response)
             {
                 progress?.Report(new DeviceProgress
                 {
                     PType = ProgressType.ALERT,
-                    PMessage = $"Failure turning device on. Device: {Name}. " +
+                    PMessage = $"Failure turning device on. Device: {_settings.Id}. " +
                                $"Device returned following message {Environment.NewLine} {response}"
                 });
             }
         }
 
         /// <summary>
-        /// Sets deivce to Off state and reports the progress
+        /// Sets device to Off state and reports the progress
         /// </summary>
         /// <param name="progress"></param>
         /// <returns></returns>
@@ -344,18 +373,18 @@ namespace CTS.Oberon
             progress?.Report(new DeviceProgress()
             {
                 PType = ProgressType.INFO,
-                PMessage = $"Turning {Name} off at {DateTime.Now}... "
+                PMessage = $"Turning {_settings.Id} off at {DateTime.Now}... "
             });
 
-            var response = (Id != "00") ? await DeviceOffAsync()
-                                        : await SimDeviceOffAsync();
+            var response = _settings.Id.EndsWith("00") ? await SimDeviceOffAsync()
+                                                       : await DeviceOffAsync();
             
             if ("Success" != response)
             {
                 progress?.Report(new DeviceProgress
                 {
                     PType = ProgressType.ALERT,
-                    PMessage = $"Failure turning device off. Device: {Name}. " +
+                    PMessage = $"Failure turning device off. Device: {_settings.Id}. " +
                                $"Device returned following message {Environment.NewLine} {response}"
                 });
             }
@@ -371,7 +400,7 @@ namespace CTS.Oberon
 
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri($"http://{IpAddress}");
+                client.BaseAddress = new Uri($"http://{_settings.IpAddress}");
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
                 client.Timeout = TimeSpan.FromMilliseconds(10000);
@@ -403,7 +432,7 @@ namespace CTS.Oberon
 
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri($"http://{IpAddress}");
+                client.BaseAddress = new Uri($"http://{_settings.IpAddress}");
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
                 client.Timeout = TimeSpan.FromMilliseconds(10000);
@@ -435,7 +464,7 @@ namespace CTS.Oberon
 
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri($"http://{IpAddress}");
+                client.BaseAddress = new Uri($"http://{_settings.IpAddress}");
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
                 client.Timeout = TimeSpan.FromMilliseconds(10000);

@@ -1,7 +1,4 @@
-﻿using CTS.Juno.Common;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
 
 namespace CTS.Callisto
 {
@@ -19,15 +16,4 @@ namespace CTS.Callisto
 
         public DateTime MeasurementTime { get; set; } = DateTime.MinValue;
     }
-
-    //public class CallistoProgress
-    //{
-    //    public string ReportingDeviceId { get; set; }
-
-    //    public DateTime ReportTime { get; set; }
-
-    //    public string ReportMessage { get; set; }
-
-    //    public CallistoMeasurements ReportedMesuarements { get; set; }
-    //}
 }

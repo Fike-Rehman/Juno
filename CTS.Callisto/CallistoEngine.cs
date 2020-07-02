@@ -20,7 +20,7 @@ namespace CTS.Callisto
 
        // private string ZohalHubUri;
 
-        private List<CallistoDevice> _callistos = null;
+        private readonly List<CallistoDevice> _callistos = null;
 
        // const string deviceKey = "wXxFEeYqmA90pIqugGgi93HCruEKIont/7KZV44WqaM=";
 
@@ -83,13 +83,6 @@ namespace CTS.Callisto
                 // print a list of online devices:
                 _logger.LogInformation($"Found {_callistos.Count} callistos devices online:");
 
-                //_logger.LogInformation($"Device ID\tLocation\tIp Address");
-
-                //_callistos.ForEach(d =>
-                //{
-                //    _logger.LogInformation($"{d.Id}\t{d.Location}\t{d.IpAddress}");
-                //});
-
                 try
                 {
                     var callistoTasks = new List<Task>();
@@ -108,6 +101,8 @@ namespace CTS.Callisto
                         Task.Delay(2000, cToken).Wait();
                     });
 
+                    Task.Delay(2000, cToken);
+
                     // Launch Monitor Routines for all initialized devices:
                     _callistos.ForEach(callisto =>
                     {
@@ -116,15 +111,19 @@ namespace CTS.Callisto
                         var mt = Task.Run(() => callisto.StartMonitorRoutineAsync(ProcessMeasurements, 
                                                                                   new Progress<DeviceProgress>(LogProgress), 
                                                                                   cToken));
+                        
+                        _logger.LogInformation($"Monitor routine for Callisto device: {callisto.Id} started!");
 
                         callistoTasks.Add(mt);
 
                         Task.Delay(2000, cToken).Wait(); // stagger the device monitoring so the logs are less jumbled
                     });
+
+                    Task.WaitAll(callistoTasks.ToArray());
                 }
                 catch(Exception x)
                 {
-                    _logger.LogError("Exception while running Oberon Tasks!");
+                    _logger.LogError("Exception while running Callisto Tasks!");
                     _logger.LogError(x.Message);
                     _logger.LogError(x.InnerException.Message);
                 }
@@ -214,8 +213,12 @@ namespace CTS.Callisto
                     report.Append($"\tTemperature: {measurements.Temperature}{tUnit}{Environment.NewLine}");
                     report.Append($"\tHeat Index: {measurements.HeatIndex}{tUnit}{Environment.NewLine}");
                     report.Append($"\tHumidity: {measurements.Humidity} %{Environment.NewLine}");
-                    report.Append($"\tDew Point: {measurements.DewPoint}{tUnit}{Environment.NewLine}");
-                    
+
+                    if(measurements.DewPoint != "N/A")
+                        report.Append($"\tDew Point: {measurements.DewPoint}{tUnit}{Environment.NewLine}");
+                    else
+                        report.Append($"\tDew Point: {measurements.DewPoint}{Environment.NewLine}");
+
                     _logger.LogInformation(report.ToString());  
                 }
             }

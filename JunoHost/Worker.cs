@@ -78,7 +78,7 @@ namespace JunoHost
         public override Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Juno Service Stop requested!");
-            _robin.SpeakAsync("Stoping Juno Service. Please stand by...").Wait();
+            _robin.SpeakAsync("Stopping Juno Service. Please stand by...").Wait();
 
             try
             {
@@ -99,7 +99,7 @@ namespace JunoHost
             int n = 3;
             while (n > 0)
             {
-                _logger.LogInformation($"Stoping Juno Service in {n} seconds...");
+                _logger.LogInformation($"Stopping Juno Service in {n} seconds...");
                 n--;
                 cancellationToken.WaitHandle.WaitOne(1000);
             }

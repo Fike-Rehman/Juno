@@ -1,5 +1,6 @@
 ﻿using CTS.Juno.Common;
 using System;
+using System.Globalization;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
@@ -106,7 +107,7 @@ namespace CTS.Callisto
                 if (!ct.IsCancellationRequested)
                 {
                     // if this is a simulated device, send a simulated Ping, otherwise send a real ping
-                    var response = _settings.Id != "00" ? await PingAsync()
+                    var response = !_settings.Id.EndsWith("00") ? await PingAsync()
                                               : await SimPingAsync();
 
                     if (response == "Success")
@@ -159,35 +160,60 @@ namespace CTS.Callisto
                     PMessage = $"Getting new measurements for device: {Id}"
                 });
 
-                if(await GetMesurements())
+                if (Id.EndsWith("00"))
                 {
-                    progresss?.Report(new DeviceProgress
+                    // Simulated device
+                    if (await SimGetMesurements())
                     {
-                        PType = ProgressType.INFO,
-                        PMessage = $"Measurements successfully updated for device: {Id}"
-                    });
+                        progresss?.Report(new DeviceProgress
+                        {
+                            PType = ProgressType.INFO,
+                            PMessage = $"Measurements (simulated) successfully updated for device: {Id}"
+                        });
 
-
-                    // send the measurements back:
-                    ProcessMeasurements?.Invoke(new CallistoMeasurements 
-                                                {
-                                                    ReportingDeviceId = Id,
-                                                    Temperature = _temperature,
-                                                    HeatIndex = _heatIndex,
-                                                    Humidity = _humidity,
-                                                    DewPoint = _dewpoint,
-                                                    MeasurementTime = now
-                                                });
+                        // send the measurements back:
+                        ProcessMeasurements?.Invoke(new CallistoMeasurements
+                        {
+                            ReportingDeviceId = Id,
+                            Temperature = _temperature,
+                            HeatIndex = _heatIndex,
+                            Humidity = _humidity,
+                            DewPoint = _dewpoint,
+                            MeasurementTime = now
+                        });
+                    }
                 }
                 else
                 {
-                    // one more measurements have failed. Send a progress report:
-                    progresss?.Report(new DeviceProgress
+                    if (await GetMesurements())
                     {
-                        PType = ProgressType.ALERT,
-                        PMessage = $"Failed to update measurements for device: {Id} at " +
-                                       $"{now.ToShortDateString() + now.ToLongTimeString()}"
-                    });
+                        progresss?.Report(new DeviceProgress
+                        {
+                            PType = ProgressType.INFO,
+                            PMessage = $"Measurements successfully updated for device: {Id}"
+                        });
+
+                        // send the measurements back:
+                        ProcessMeasurements?.Invoke(new CallistoMeasurements
+                        {
+                            ReportingDeviceId = Id,
+                            Temperature = _temperature,
+                            HeatIndex = _heatIndex,
+                            Humidity = _humidity,
+                            DewPoint = _dewpoint,
+                            MeasurementTime = now
+                        });
+                    }
+                    else
+                    {
+                        // one more measurements have failed. Send a progress report:
+                        progresss?.Report(new DeviceProgress
+                        {
+                            PType = ProgressType.ALERT,
+                            PMessage = $"Failed to update measurements for device: {Id} at " +
+                                           $"{now.ToShortDateString() + now.ToLongTimeString()}"
+                        });
+                    }
                 }
 
                 // Fire off a delay of 10 minutes before getting next data reading:
@@ -199,8 +225,6 @@ namespace CTS.Callisto
 
         private async Task<bool> GetMesurements()
         {
-            var now = DateTime.Now;
-
             if (await GetTemperature() == "Success" &&
                      await GetHumidity() == "Success" &&
                      await GetHeatIndex() == "Success")
@@ -218,6 +242,26 @@ namespace CTS.Callisto
                 return false;
         }
 
+        private async Task<bool> SimGetMesurements()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2)); // simulated measurement delay
+
+            Random r = new Random();
+
+            _temperature = r.Next(-25, 125).ToString();
+            _heatIndex = r.Next(-25, 125).ToString();
+            _humidity = r.Next(0, 100).ToString();
+            
+            if (double.TryParse(_temperature, out double temp) &&
+                double.TryParse(_humidity, out double humidity))
+            {
+                _dewpoint = _isMetric ? ComputeDewPointC(temp, humidity)
+                                      : ComputeDewPointF(temp, humidity);
+            }
+
+            return true;
+        }
+
         private async Task<string> PingAsync()
         {
             var pingResponse = "";
@@ -232,8 +276,7 @@ namespace CTS.Callisto
                 try
                 {
                     var response = await client.GetAsync("/ping");
-
-
+ 
                     if (response.IsSuccessStatusCode)
                     {
                         pingResponse = "Success";
@@ -252,12 +295,10 @@ namespace CTS.Callisto
 
         private static async Task<string> SimPingAsync()
         {
-            var pingResponse = "";
-
             // send a simulated Ping
             await Task.Delay(3000);
 
-            pingResponse = "Success";
+            string pingResponse = "Success";
 
             return pingResponse;
         }
@@ -407,7 +448,7 @@ namespace CTS.Callisto
             {
                 var dewpoint = temperatureF - ((100 - humidity) * 9 / 25);
 
-                return dewpoint.ToString();
+                return dewpoint.ToString("F", CultureInfo.InvariantCulture);
             }
             else
             {
