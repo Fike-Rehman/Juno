@@ -43,34 +43,35 @@ namespace CTS.Oberon
             _logger.LogInformation("Beginning Oberon Activities...");
 
             // Build Oberon device list:
-            foreach (var device in _appSettings.Devicelist.JunoDevices)
-            {
-                if (device.Id.StartsWith("Oberon"))
-                {
-                    var settings = new OberonSettings()
-                    {
-                        Id = device.Id,
-                        Name = device.Name,
-                        SerialNumber = device.SerialNumber,
-                        ProvisionDate = device.ProvisionDate,
-                        IpAddress = device.IpAddress,
-                        Location = device.Location,
-                        TimeSettings = device.Settings
-                    };
-
-                    _oberonDevices.Add(new OberonDevice(settings));
-                }
-            }
-
-            // Initialize the devices found:
-            // We must wait for this to complete before proceeding
-            InitDevicesAsync(cToken).Wait();
-
-            _logger.LogInformation("Device initialization Completed!");
-            _logger.LogInformation($"{_oberonDevices.Count} active Oberon devices(s) detected during initialization!");
-
             try
             {
+                foreach (var device in _appSettings.Devicelist.JunoDevices)
+                {
+                    if (device.Id.StartsWith("Oberon"))
+                    {
+                        var settings = new OberonSettings()
+                        {
+                            Id = device.Id,
+                            Name = device.Name,
+                            SerialNumber = device.SerialNumber,
+                            ProvisionDate = device.ProvisionDate,
+                            IpAddress = device.IpAddress,
+                            Location = device.Location,
+                            TimeSettings = device.Settings
+                        };
+
+                        _oberonDevices.Add(new OberonDevice(settings));
+                    }
+                }
+
+                // Initialize the devices found:
+                // We must wait for this to complete before proceeding
+                InitDevicesAsync(cToken).Wait();
+
+                _logger.LogInformation("Device initialization Completed!");
+                _logger.LogInformation($"{_oberonDevices.Count} active Oberon devices(s) detected during initialization!");
+
+               
                 var oberonTasks = new List<Task>();
 
                 // Launch ping routines for all the initialized devices:
@@ -93,9 +94,9 @@ namespace CTS.Oberon
                     if (cToken.IsCancellationRequested) return;
 
                     var mt = Task.Run(() => d.StartMonitorRoutineAsync(RefreshSunsetTime,
-                                                                       new Progress<DeviceProgress>(LogProgress),
-                                                                       cToken));
-                    
+                                                                        new Progress<DeviceProgress>(LogProgress),
+                                                                        cToken));
+
                     _logger.LogInformation($"Monitor routine for Oberon device :{d.Id} started!");
 
                     oberonTasks.Add(mt);
@@ -103,7 +104,7 @@ namespace CTS.Oberon
                     Task.Delay(2000, cToken).Wait();
                 });
 
-                Task.WaitAll(oberonTasks.ToArray());
+                Task.WaitAll(oberonTasks.ToArray());  
             }
             catch (Exception x)
             {

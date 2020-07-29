@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace CTS.Callisto
 {
@@ -17,19 +18,18 @@ namespace CTS.Callisto
         private readonly IAppSettings _appSettings;
 
         private readonly ISecureSettings _secureSettings;
-
-       // private string ZohalHubUri;
-
+     
         private readonly List<CallistoDevice> _callistos = null;
 
        // const string deviceKey = "wXxFEeYqmA90pIqugGgi93HCruEKIont/7KZV44WqaM=";
 
         static DeviceClient deviceClient;
 
-        public CallistoEngine(ILogger<CallistoEngine> logger,  IOptions<AppSettings> appSettings, ISecureSettings secureSettings)
+        public CallistoEngine(ILogger<CallistoEngine> logger, IOptions<AppSettings> appSettings, ISecureSettings secureSettings)
         {
             _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _secureSettings = secureSettings ?? throw new ArgumentNullException(nameof(secureSettings));
 
             _logger = logger;
             _appSettings = appSettings.Value;
@@ -43,48 +43,52 @@ namespace CTS.Callisto
         {
             _logger.LogInformation("Beginning Callisto Activities...");
 
-            // read callisto devices configuration and build the device list
-
-            foreach (var device in _appSettings.Devicelist.JunoDevices)
+            try
             {
-                if (device.Id.StartsWith("Callisto"))
+                // read callisto devices configuration and build the device list
+                foreach (var device in _appSettings.Devicelist.JunoDevices)
                 {
-                    var settings = new CallistoSettings()
+                    if (device.Id.StartsWith("Callisto"))
                     {
-                        Id = device.Id,
-                        Name = device.Name,
-                        SerialNumber = device.SerialNumber,
-                        ProvisionDate = device.ProvisionDate,
-                        IpAddress = device.IpAddress,
-                        Location = device.Location,
-                        DeviceKey = _secureSettings.GetDeviceKey(device.Id)
-                    };
+                        var settings = new CallistoSettings()
+                        {
+                            Id = device.Id,
+                            Name = device.Name,
+                            SerialNumber = device.SerialNumber,
+                            ProvisionDate = device.ProvisionDate,
+                            IpAddress = device.IpAddress,
+                            Location = device.Location,
+                            DeviceKey = _secureSettings.GetDeviceKey(device.Id)
+                        };
 
-                    if(_appSettings.IsMetric)
-                    {
-                        _callistos.Add(new CallistoDevice(settings, true));
-                    }
-                    else
-                    {
-                        _callistos.Add(new CallistoDevice(settings));
-                    }
-                }  
-            }
+                        if(_appSettings.IsMetric)
+                        {
+                            _callistos.Add(new CallistoDevice(settings, true));
+                        }
+                        else
+                        {
+                            _callistos.Add(new CallistoDevice(settings));
+                        }
+                    }  
+                }
 
-            _logger.LogInformation($"{_callistos.Count} Callisto Device(s) found in the configuration!");
-
-            if(_callistos.Count > 0)
-            {
-                // Initialize each device defined in the config by sending a ping
-                // to see if it is Online. We must wait for this to complete before proceeding
-
-                InitDevicesAsync(cToken).Wait();
-
-                // print a list of online devices:
-                _logger.LogInformation($"Found {_callistos.Count} callistos devices online:");
-
-                try
+                if(_callistos.Count > 0)
                 {
+                    // Initialize each device defined in the config by sending a ping
+                    // to see if it is Online. We must wait for this to complete before proceeding
+
+                    InitDevicesAsync(cToken).Wait();
+
+                    // print a list of online devices:
+                    _logger.LogInformation($"Found {_callistos.Count} callistos devices online:");
+                
+                    foreach (var d in _callistos)
+                    {
+                        _logger.LogInformation($"Name: {d.Id}");
+                        _logger.LogInformation($"Location: {d.Location}");
+                    }
+
+               
                     var callistoTasks = new List<Task>();
 
                     // Launch ping routines for all the initialized devices:
@@ -109,8 +113,8 @@ namespace CTS.Callisto
                         if (cToken.IsCancellationRequested) return;
 
                         var mt = Task.Run(() => callisto.StartMonitorRoutineAsync(ProcessMeasurements, 
-                                                                                  new Progress<DeviceProgress>(LogProgress), 
-                                                                                  cToken));
+                                                                                    new Progress<DeviceProgress>(LogProgress), 
+                                                                                    cToken));
                         
                         _logger.LogInformation($"Monitor routine for Callisto device: {callisto.Id} started!");
 
@@ -121,17 +125,18 @@ namespace CTS.Callisto
 
                     Task.WaitAll(callistoTasks.ToArray());
                 }
-                catch(Exception x)
-                {
-                    _logger.LogError("Exception while running Callisto Tasks!");
-                    _logger.LogError(x.Message);
-                    _logger.LogError(x.InnerException.Message);
-                }
+                
+            }
+            catch (Exception x)
+            {
+                _logger.LogError("Exception while running Callisto Tasks!");
+                _logger.LogError(x.Message);
+                _logger.LogError(x.InnerException.Message);
             }
 
             //deviceClient = DeviceClient.Create(ZohalHubUri, 
             //                                   new DeviceAuthenticationWithRegistrySymmetricKey("Callisto00", deviceKey));
-            
+
             //SendDeviceToCloudMessagesAsync();
         }
 
@@ -184,7 +189,7 @@ namespace CTS.Callisto
         {
             if (progressReport.PType == ProgressType.TRACE)
             {
-                 Console.WriteLine(progressReport.PMessage);
+                // Console.WriteLine(progressReport.PMessage);
                 _logger.LogDebug(progressReport.PMessage);
             }
             else if (progressReport.PType == ProgressType.INFO)

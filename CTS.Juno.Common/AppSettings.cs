@@ -9,7 +9,7 @@
         public Devicelist Devicelist { get; set; }
     }
 
-    public class Devicelist
+    public class Devicelist : IDevicelist
     {
         public JunoDevice[] JunoDevices { get; set; }
     }

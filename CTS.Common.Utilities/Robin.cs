@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 
 namespace CTS.Common.Utilities
 {
-    public class Robin 
-    { 
+    public class Robin : IRobin
+    {
         private readonly SpeechConfig speechConfig = SpeechConfig.FromSubscription("f885654361df407b9bdb621b45dd10c5", "CentralUS");
 
         private readonly AudioConfig audioConfig = AudioConfig.FromDefaultSpeakerOutput();

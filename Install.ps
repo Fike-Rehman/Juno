@@ -1,3 +1,3 @@
-dotnet restore
-dotnet publish -c Release -o ./publish/Junoservice
-sc.exe create JunoService binpath= ./publish/Junoservice/JunoHost.exe
+dotdotnet build
+dotnet publish -c Release -o 'c:/Program Files\CTS\Juno' -r win-x64
+sc.exe create JunoGatewayService binpath= 'c:\Program Files\CTS\Juno\JunoHost.exe
