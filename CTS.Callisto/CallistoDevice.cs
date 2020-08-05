@@ -141,7 +141,7 @@ namespace CTS.Callisto
         /// <param name="ProcessMeasurements"></param>
         /// <param name="cToken"></param>
         /// <returns></returns>
-        public async Task StartMonitorRoutineAsync(Action<CallistoMeasurements> ProcessMeasurements, 
+        public async Task StartMonitorRoutineAsync(Func<CallistoMeasurements, Task> ProcessMeasurements, 
                                                    IProgress<DeviceProgress> progresss, CancellationToken cToken)
         {
             progresss?.Report(new DeviceProgress

@@ -2,12 +2,12 @@
 using Microsoft.Azure.Devices.Client;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 
 namespace CTS.Callisto
 {
@@ -20,8 +20,6 @@ namespace CTS.Callisto
         private readonly ISecureSettings _secureSettings;
      
         private readonly List<CallistoDevice> _callistos = null;
-
-       // const string deviceKey = "wXxFEeYqmA90pIqugGgi93HCruEKIont/7KZV44WqaM=";
 
         static DeviceClient deviceClient;
 
@@ -112,7 +110,7 @@ namespace CTS.Callisto
                     {
                         if (cToken.IsCancellationRequested) return;
 
-                        var mt = Task.Run(() => callisto.StartMonitorRoutineAsync(ProcessMeasurements, 
+                        var mt = Task.Run(() => callisto.StartMonitorRoutineAsync(ProcessMeasurementsAsync, 
                                                                                     new Progress<DeviceProgress>(LogProgress), 
                                                                                     cToken));
                         
@@ -134,8 +132,7 @@ namespace CTS.Callisto
                 _logger.LogError(x.InnerException.Message);
             }
 
-            //deviceClient = DeviceClient.Create(ZohalHubUri, 
-            //                                   new DeviceAuthenticationWithRegistrySymmetricKey("Callisto00", deviceKey));
+            
 
             //SendDeviceToCloudMessagesAsync();
         }
@@ -202,14 +199,50 @@ namespace CTS.Callisto
             }
         }
 
-        private void ProcessMeasurements(CallistoMeasurements measurements)
+        private async Task ProcessMeasurementsAsync(CallistoMeasurements measurements)
         {
             if(measurements != null)
             {
-                // get the device info sending these measurements:
-                if (_callistos != null)
+                if (_callistos != null && _callistos.Count > 0)
                 {
-                    var location = _callistos.Find(d => d.Id == measurements.ReportingDeviceId).Location;
+                    // get the device info sending these measurements:
+                    var reportingDevice = _callistos.Find(d => d.Id == measurements.ReportingDeviceId);
+
+                    // create the deviceClient object for the reporting device
+                    var deviceKey = _secureSettings.GetDeviceKey(reportingDevice.Id);
+
+                    deviceClient = DeviceClient.Create(_appSettings.ZohalHubUri,
+                                               new DeviceAuthenticationWithRegistrySymmetricKey(reportingDevice.Id, deviceKey));
+
+                    // build the Callisto device message payload to send to the cloud:
+                    var payload = new CallistoDeviceMessage
+                    {
+                        Device_Location = reportingDevice.Location,
+                        Device_ReportingTime = measurements.MeasurementTime,
+                        Meausurement_Temperature = measurements.Temperature,
+                        Meausurement_HeatIndex = measurements.HeatIndex,
+                        Meausurement_Humidity = measurements.Humidity,
+                        Meausurement_DewPoint = measurements.DewPoint
+                    };
+
+                    // dispatch the payload to the cloud:
+                    var telemetryDataPoint = new
+                    {
+                        deviceId = reportingDevice.Id,
+                        callistodeviceData = payload
+                    };
+
+                    var messageString = JsonConvert.SerializeObject(telemetryDataPoint);
+                    var message = new Message(Encoding.ASCII.GetBytes(messageString));
+
+                    await deviceClient.SendEventAsync(message);
+                    
+                    _logger.LogInformation($"Callisto measurements sent to the cloud at {DateTime.Now}");
+
+
+                    // Also log the measurements to the log file:
+
+                    var location = reportingDevice.Location;
                     var reportTime = $"{measurements.MeasurementTime.ToShortDateString()}, {measurements.MeasurementTime.ToLongTimeString()}";
                     var tUnit = _appSettings.IsMetric ? "°C" : $"°F";
 
@@ -234,34 +267,40 @@ namespace CTS.Callisto
         /// Here load Callisto devices from device store and match them up with 
         /// their Azure IOT hub device keys
         /// </summary>
+        private async void SendDeviceToCloudMessagesAsync(string deviceId)
+        {
+            // create the deviceClient object for the reporting device
+            var deviceKey = _secureSettings.GetDeviceKey(deviceId);
 
+            deviceClient = DeviceClient.Create(_appSettings.ZohalHubUri,
+                                               new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, deviceKey));
 
-        //private async void SendDeviceToCloudMessagesAsync()
-        //{
-        //    var rnd = new Random();
+            
+            
+            //var rnd = new Random();
 
-        //    while (true)
-        //    {
-        //        var callistoDevice = new SimulatedCallistoDevice
-        //        {
-        //            TempF = rnd.Next(-40, 40),
-        //            Humidity = rnd.Next(10, 90)
-        //        };
+            //while (true)
+            //{
+            //    var callistoDevice = new SimulatedCallistoDevice
+            //    {
+            //        TempF = rnd.Next(-40, 40),
+            //        Humidity = rnd.Next(10, 90)
+            //    };
 
-        //        var telemetryDataPoint = new
-        //        {
-        //            deviceId = "Callisto00",
-        //            callistodeviceData = callistoDevice
-        //        };
-        //        var messageString = JsonConvert.SerializeObject(telemetryDataPoint);
-        //        var message = new Message(Encoding.ASCII.GetBytes(messageString));
+            //    var telemetryDataPoint = new
+            //    {
+            //        deviceId = "Callisto00",
+            //        callistodeviceData = callistoDevice
+            //    };
+            //    var messageString = JsonConvert.SerializeObject(telemetryDataPoint);
+            //    var message = new Message(Encoding.ASCII.GetBytes(messageString));
 
-        //        await deviceClient.SendEventAsync(message);
-        //        _logger.LogInformation($"Callisto message sent at: {DateTime.Now}, MessageString: {messageString}");
+            //    await deviceClient.SendEventAsync(message);
+            //    _logger.LogInformation($"Callisto message sent at: {DateTime.Now}, MessageString: {messageString}");
 
-        //        Task.Delay(1000).Wait();
-        //    }
-        //}
+            //    Task.Delay(1000).Wait();
+            //}
+        }
     }
 }
 
