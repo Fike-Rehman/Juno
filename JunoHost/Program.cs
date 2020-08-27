@@ -127,13 +127,13 @@ namespace JunoHost
                     {
                         services.AddOptions();
                         services.Configure<AppSettings>(context.Configuration);
-                        
+
                         services.AddHostedService<Worker>()
                         .AddSingleton(typeof(OberonEngine))   // NOTE: DI fails to resolve two dependencies of the same type 
                         .AddSingleton(typeof(CallistoEngine)) // so this is just a work around
                         .AddSingleton<IAppSettings, AppSettings>()
-                        .AddSingleton<ISecureSettings, SecureSettings>()
-                        .AddSingleton<IRobin, Robin>();
+                        .AddSingleton<ISecureSettings, SecureSettings>();
+                       // .AddSingleton<IRobin, Robin>();
                         
                     })
                     .UseSerilog();  

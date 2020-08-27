@@ -16,7 +16,7 @@ namespace JunoHost
     {
         private readonly ILogger<Worker> _logger;
 
-        private readonly IRobin _robin;
+      //  private readonly IRobin _robin;
 
         private readonly OberonEngine _oberonEngine;
 
@@ -25,13 +25,13 @@ namespace JunoHost
         private readonly ConcurrentBag<Task> _taskEngines = new ConcurrentBag<Task>();
 
         public Worker(ILogger<Worker> logger,
-                      IRobin robin,
+                    //  IRobin robin,
                       OberonEngine oberonEngine,
                       CallistoEngine callistoEngine)
         {
             _logger = logger;
 
-            _robin = robin;
+       //     _robin = robin;
 
            _oberonEngine = oberonEngine;
 
@@ -59,7 +59,7 @@ namespace JunoHost
                 _logger.LogInformation("Starting Juno Service. Please stand by...");
             }
                 
-            _robin.SpeakAsync("Starting Juno Service... Please stand by").Wait();
+         //   _robin.SpeakAsync("Starting Juno Service... Please stand by").Wait();
 
             // Start the Oberon Engine
             var oberonTask = Task.Run(() => _oberonEngine.Run(cancellationToken));
@@ -84,7 +84,7 @@ namespace JunoHost
 
         public override Task StopAsync(CancellationToken cancellationToken)
         {
-             _robin.SpeakAsync("Stopping Juno Service. Please stand by...").Wait();
+          //   _robin.SpeakAsync("Stopping Juno Service. Please stand by...").Wait();
 
             _logger.LogInformation("Juno Service Stop requested!");
 
