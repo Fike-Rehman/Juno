@@ -130,11 +130,7 @@ namespace CTS.Callisto
                 _logger.LogError("Exception while running Callisto Tasks!");
                 _logger.LogError(x.Message);
                 _logger.LogError(x.InnerException.Message);
-            }
-
-            
-
-            //SendDeviceToCloudMessagesAsync();
+            } 
         }
 
         /// <summary>
@@ -260,46 +256,6 @@ namespace CTS.Callisto
                     _logger.LogInformation(report.ToString());  
                 }
             }
-        }
-
-
-        /// <summary>
-        /// Here load Callisto devices from device store and match them up with 
-        /// their Azure IOT hub device keys
-        /// </summary>
-        private async void SendDeviceToCloudMessagesAsync(string deviceId)
-        {
-            // create the deviceClient object for the reporting device
-            var deviceKey = _secureSettings.GetDeviceKey(deviceId);
-
-            deviceClient = DeviceClient.Create(_appSettings.ZohalHubUri,
-                                               new DeviceAuthenticationWithRegistrySymmetricKey(deviceId, deviceKey));
-
-            
-            
-            //var rnd = new Random();
-
-            //while (true)
-            //{
-            //    var callistoDevice = new SimulatedCallistoDevice
-            //    {
-            //        TempF = rnd.Next(-40, 40),
-            //        Humidity = rnd.Next(10, 90)
-            //    };
-
-            //    var telemetryDataPoint = new
-            //    {
-            //        deviceId = "Callisto00",
-            //        callistodeviceData = callistoDevice
-            //    };
-            //    var messageString = JsonConvert.SerializeObject(telemetryDataPoint);
-            //    var message = new Message(Encoding.ASCII.GetBytes(messageString));
-
-            //    await deviceClient.SendEventAsync(message);
-            //    _logger.LogInformation($"Callisto message sent at: {DateTime.Now}, MessageString: {messageString}");
-
-            //    Task.Delay(1000).Wait();
-            //}
         }
     }
 }
